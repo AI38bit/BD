@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BRAUN SI-Einheiten Wandler</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+    :root {
+      --braun-chassis: #eae7df;
+      --braun-chassis-dark: #d5d1c5;
+      --braun-text: #242220;
+      --braun-muted: #737069;
+      --braun-button-face: #9fa89e;
+      --braun-button-shadow: #778177;
+      --braun-red: #d63826;
+      --vfd-bg: #141716;
+      --vfd-glow: #38e1b6;
+      --vfd-text: #cbfcf0;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      background-color: #272a2b;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      color: var(--braun-text);
+      overflow-x: hidden;
+    }
+
+    /* Braun Hardware Surface Feel */
+    .braun-case {
+      background: radial-gradient(circle at 40% 30%, #f4f1ea 0%, #e2ded5 100%);
+      box-shadow:
+        0 25px 50px -12px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(255, 255, 255, 0.5) inset,
+        0 1px 3px 0 rgba(0, 0, 0, 0.2);
+    }
+
+    /* Distinctive Vintage Push Button */
+    .round-push-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #b6c0b5, #889387);
+      box-shadow:
+        0 5px 10px rgba(0, 0, 0, 0.28),
+        0 1px 2px rgba(0, 0, 0, 0.4),
+        inset 0 2px 2px rgba(255, 255, 255, 0.6),
+        inset 0 -2px 3px rgba(0, 0, 0, 0.35);
+      position: relative;
+      transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+
+    .round-push-btn::after {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 40%, #a9b3a8, #7a8479);
+      box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.3);
+    }
+
+    .round-push-btn:active,
+    .round-push-btn.active {
+      transform: translateY(3px) scale(0.96);
+      box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.3),
+        inset 0 3px 5px rgba(0, 0, 0, 0.6),
+        inset 0 -1px 1px rgba(255, 255, 255, 0.2);
+    }
+
+    .round-push-btn.active::before {
+      content: '';
+      position: absolute;
+      top: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--braun-red);
+      box-shadow: 0 0 6px rgba(214, 56, 38, 0.9);
+      z-index: 10;
+    }
+
+    /* Rotary Tuning Wheel */
+    .tuning-dial-knob {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #bcc6bb, #7d887c);
+      box-shadow:
+        0 8px 16px rgba(0, 0, 0, 0.35),
+        inset 0 2px 3px rgba(255, 255, 255, 0.6),
+        inset 0 -3px 5px rgba(0, 0, 0, 0.45);
+      cursor: ns-resize;
+      touch-action: none;
+    }
+
+    /* Sunken Vintage Window Bevel */
+    .sunken-window {
+      background: #fdfcf9;
+      box-shadow:
+        inset 3px 3px 7px rgba(0, 0, 0, 0.25),
+        inset -2px -2px 5px rgba(255, 255, 255, 0.8),
+        0 1px 1px rgba(255, 255, 255, 0.6);
+      position: relative;
+    }
+
+    /* Glass Glare Overlay */
+    .glass-glare {
+      pointer-events: none;
+      background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.05) 50%, rgba(0,0,0,0.03) 100%);
+    }
+
+    /* Central Modern Retro Display (Recessed VFD/OLED) */
+    .vfd-display {
+      background: #0f1311;
+      border: 2px solid #28302c;
+      box-shadow:
+        inset 0 4px 12px rgba(0,0,0,0.8),
+        0 1px 0 rgba(255, 255, 255, 0.5);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .vfd-glow-text {
+      color: var(--vfd-text);
+      text-shadow: 0 0 6px rgba(56, 225, 182, 0.6), 0 0 12px rgba(56, 225, 182, 0.25);
+    }
+
+    /* Subtle needle pointer */
+    .tuning-indicator-line {
+      height: 2px;
+      background: #d63826;
+      box-shadow: 0 1px 4px rgba(214, 56, 38, 0.8);
+      position: absolute;
+      left: 0;
+      right: 0;
+      pointer-events: none;
+      transition: top 0.08s cubic-bezier(0.1, 0.7, 0.1, 1);
+    }
+  </style>
+</head>
+<body>
+
+<div class="braun-case w-full max-w-[1020px] rounded-2xl p-7 md:p-9 relative">
+
+  <!-- Top Bar: Braun Typography and Status -->
+  <div class="flex items-center justify-between border-b border-black/10 pb-5 mb-6">
+    <div class="flex items-baseline gap-4">
+      <span class="font-extrabold text-2xl tracking-tighter" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">BRAUN</span>
+      <span class="text-xs font-semibold tracking-widest text-[#66635c] uppercase">SI-Einheiten Wandler • Typ 1965</span>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <span class="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#737069] bg-black/5 px-2.5 py-1 rounded-full">
+        <span class="w-1.5 h-1.5 rounded-full bg-[#38e1b6] animate-pulse"></span>
+        JIS철강 핸드북 SI 표준
+      </span>
+      <button onclick="toggleAudio()" id="soundToggleBtn" class="text-xs font-medium px-2 py-1 rounded border border-black/15 hover:bg-black/5 text-[#55524b] transition flex items-center gap-1">
+        <span id="soundIcon">🔊</span> <span id="soundLabel">기계음 켬</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-7">
+
+    <!-- [COL 1: LEFT] Category Selector & Auxiliary Knobs (3 cols) -->
+    <div class="lg:col-span-3 flex flex-col justify-between space-y-6">
+      <div>
+        <div class="text-[11px] font-bold uppercase tracking-wider text-[#66635c] mb-3 flex items-center gap-2">
+          <span>도량형 선택</span>
+          <div class="h-[1px] flex-1 bg-black/10"></div>
+        </div>
+
+        <!-- Vertical Push Button Group (Radio-style band buttons) -->
+        <div class="space-y-3" id="categoryButtonGroup">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- Fine adjustment steps knob panel -->
+      <div class="bg-black/5 p-4 rounded-xl border border-black/5">
+        <div class="text-[10px] font-semibold text-[#66635c] uppercase tracking-wider mb-2">미세 조정 폭 (Step)</div>
+        <div class="grid grid-cols-3 gap-2">
+          <button onclick="setStep(0.1)" class="step-btn px-2 py-1 text-[11px] font-mono rounded bg-white/70 border border-black/10 hover:bg-white text-center">0.1</button>
+          <button onclick="setStep(1.0)" class="step-btn px-2 py-1 text-[11px] font-mono rounded bg-white/70 border border-black/10 hover:bg-white text-center font-bold">1.0</button>
+          <button onclick="setStep(10.0)" class="step-btn px-2 py-1 text-[11px] font-mono rounded bg-white/70 border border-black/10 hover:bg-white text-center">10.0</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- [COL 2: CENTER] Digital Display VFD Panel (6 cols) -->
+    <div class="lg:col-span-6 flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-[#66635c] flex items-center gap-2">
+            <span>실시간 디지털 출력 창</span>
+            <div class="w-2 h-2 rounded-full bg-[#d63826]"></div>
+          </div>
+          <span class="text-[11px] text-[#78756e]" id="currentCategoryDisplay">선택: 힘 (Force)</span>
+        </div>
+
+        <!-- High-Contrast Digital Display -->
+        <div class="vfd-display rounded-xl p-5 relative overflow-hidden">
+          <div class="glass-glare absolute inset-0"></div>
+
+          <!-- Input Source Bar -->
+          <div class="flex items-baseline justify-between border-b border-[#24332d] pb-3 mb-4">
+            <div>
+              <span class="text-[10px] uppercase tracking-widest text-[#699184]">기준 단위 입력 (Input)</span>
+              <div class="flex items-center gap-2 mt-1">
+                <input type="number" id="directNumberInput" step="any"
+                  class="bg-transparent text-2xl font-bold font-mono text-[#42f5c8] outline-none border-b border-[#314a41] focus:border-[#42f5c8] w-40"
+                  value="1.00">
+                <span class="text-sm font-mono text-[#a5dad0]" id="baseUnitSymbol">N</span>
+              </div>
+            </div>
+
+            <div class="text-right">
+              <span class="text-[10px] uppercase tracking-widest text-[#699184]">주파수 인덱스</span>
+              <div class="text-xs font-mono text-[#42f5c8] mt-1" id="freqIndexText">340.0 kHz eq.</div>
+            </div>
+          </div>
+
+          <!-- Converted Output Table / Grid -->
+          <div class="space-y-2.5 max-h-[290px] overflow-y-auto pr-1" id="convertedOutputsList">
+            <!-- Dynamically populated unit rows with both standard and scientific notation -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Action Bar -->
+      <div class="mt-4 flex items-center justify-between bg-black/5 p-3 rounded-xl border border-black/5">
+        <div class="flex items-center gap-2">
+          <button onclick="copyAllResults()" class="px-3 py-1.5 rounded-lg bg-white shadow-sm border border-black/10 text-xs font-semibold hover:bg-[#f6f5f0] active:scale-95 transition flex items-center gap-1.5">
+            <span>📋</span> 환산 결과 복사
+          </button>
+          <button onclick="resetValue()" class="px-3 py-1.5 rounded-lg bg-white shadow-sm border border-black/10 text-xs font-semibold hover:bg-[#f6f5f0] active:scale-95 transition">
+            1.00 초기화
+          </button>
+        </div>
+        <span class="text-[11px] text-[#737069]" id="copyNotification">클릭하여 전체 복사</span>
+      </div>
+    </div>
+
+    <!-- [COL 3: RIGHT] Radio Frequency Tuning Scale Window (3 cols) -->
+    <div class="lg:col-span-3 flex flex-col items-center">
+      <div class="w-full flex items-center justify-between mb-2">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-[#66635c]">주파수 눈금창</span>
+        
+        <!-- Arrow Up / Down Control Buttons -->
+        <div class="flex items-center gap-1">
+          <button onclick="adjustNeedle(1)" class="w-7 h-7 rounded bg-white/80 border border-black/10 flex items-center justify-center text-xs font-bold hover:bg-white active:bg-[#e0ded8] shadow-sm transition" title="상향 조절 (값 증가)">
+            ▲
+          </button>
+          <button onclick="adjustNeedle(-1)" class="w-7 h-7 rounded bg-white/80 border border-black/10 flex items-center justify-center text-xs font-bold hover:bg-white active:bg-[#e0ded8] shadow-sm transition" title="하향 조절 (값 감소)">
+            ▼
+          </button>
+        </div>
+      </div>
+
+      <!-- Vertical Scale Glass Window (Authentic Braun Sk4 / T1000 vibe) -->
+      <div id="radioScaleWindow" class="sunken-window w-full h-[370px] rounded-lg border border-black/20 relative overflow-hidden cursor-ns-resize">
+        <div class="glass-glare absolute inset-0"></div>
+
+        <!-- Scale Frequency Markings (SVG for precision) -->
+        <svg id="scaleSvg" class="w-full h-full" preserveAspectRatio="none">
+          <!-- Background guide columns -->
+          <line x1="30%" y1="0" x2="30%" y2="100%" stroke="#d8d3c5" stroke-dasharray="2 2" />
+          <line x1="68%" y1="0" x2="68%" y2="100%" stroke="#d8d3c5" stroke-dasharray="2 2" />
+          <line x1="82%" y1="0" x2="82%" y2="100%" stroke="#d8d3c5" stroke-dasharray="2 2" />
+
+          <!-- Dynamic ticks rendered by JS -->
+          <g id="scaleTicksGroup"></g>
+        </svg>
+
+        <!-- Red Horizontal Tuning Line -->
+        <div id="tuningNeedle" class="tuning-indicator-line" style="top: 45%;">
+          <div class="absolute -right-1 -top-1 w-2.5 h-2.5 rounded-full bg-[#d63826] shadow-sm"></div>
+        </div>
+
+        <!-- Top & Bottom Frequency band labels -->
+        <div class="absolute top-2 left-2 right-2 flex justify-between text-[9px] font-mono text-[#8a867c] pointer-events-none">
+          <span>MAX</span>
+          <span>VAL</span>
+          <span>SI</span>
+        </div>
+        <div class="absolute bottom-2 left-2 right-2 flex justify-between text-[9px] font-mono text-[#8a867c] pointer-events-none">
+          <span>MIN</span>
+          <span id="scaleMidText">1.0</span>
+          <span>REF</span>
+        </div>
+      </div>
+
+      <!-- Rotary Fine Tuning Knob at bottom right -->
+      <div class="mt-4 flex flex-col items-center">
+        <div class="tuning-dial-knob relative flex items-center justify-center" id="rotaryKnob" title="상하 드래그하여 미세 조율">
+          <div class="w-1.5 h-4 bg-white/70 rounded-full pointer-events-none absolute top-2" id="knobIndicator"></div>
+        </div>
+        <span class="text-[10px] font-medium text-[#737069] mt-2 tracking-tight">수동 조율 다이얼 (드래그)</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="mt-8 pt-5 border-t border-black/10 flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center gap-6">
+      <div class="flex items-center gap-4" id="bottomPushRow">
+        <!-- Quick category round push buttons -->
+      </div>
+    </div>
+
+    <!-- Status & Shortcut instruction -->
+    <div class="text-[11px] font-mono text-[#7a766e]">
+      [키보드 <kbd class="px-1.5 py-0.5 bg-white border border-black/15 rounded text-[10px]">↑</kbd> <kbd class="px-1.5 py-0.5 bg-white border border-black/15 rounded text-[10px]">↓</kbd> 또는 마우스 휠 지원]
+    </div>
+  </div>
+
+</div>
+
+<script>
+  /* 
+   * 1. JIS 철강 핸드북 SI 단위 환산 데이터베이스
+   * 기준 단위의 절대 계수(1.0)를 축으로 상호 정확한 환산 수행
+   */
+  const SI_DATABASE = {
+    "힘": {
+      name: "힘 (Force)",
+      symbol: "N",
+      range: [0.1, 100],
+      baseUnit: "N",
+      units: [
+        { name: "뉴턴", sym: "N", factor: 1.0, isSI: true },
+        { name: "킬로그램힘", sym: "kgf", factor: 9.80665, isSI: false },
+        { name: "다인", sym: "dyn", factor: 1e-5, isSI: false }
+      ]
+    },
+    "압력": {
+      name: "압력 (Pressure)",
+      symbol: "Pa",
+      range: [100, 1000000],
+      baseUnit: "Pa",
+      units: [
+        { name: "파스칼", sym: "Pa", factor: 1.0, isSI: true },
+        { name: "킬로파스칼", sym: "kPa", factor: 1e3, isSI: false },
+        { name: "메가파스칼", sym: "MPa", factor: 1e6, isSI: false },
+        { name: "바", sym: "bar", factor: 1e5, isSI: false },
+        { name: "중량킬로그램/제곱센티", sym: "kgf/cm²", factor: 9.80665e4, isSI: false }
+      ]
+    },
+    "응력": {
+      name: "응력 (Stress)",
+      symbol: "MPa",
+      range: [1, 500],
+      baseUnit: "MPa",
+      units: [
+        { name: "메가파스칼 (N/mm²)", sym: "MPa", factor: 1.0, isSI: true },
+        { name: "파스칼 (N/m²)", sym: "Pa", factor: 1e-6, isSI: false },
+        { name: "킬로그램힘/제곱밀리", sym: "kgf/mm²", factor: 9.80665, isSI: false },
+        { name: "킬로그램힘/제곱센티", sym: "kgf/cm²", factor: 0.0980665, isSI: false },
+        { name: "킬로그램힘/제곱미터", sym: "kgf/m²", factor: 9.80665e-6, isSI: false }
+      ]
+    },
+    "일·에너지": {
+      name: "일·열량 (Energy)",
+      symbol: "J",
+      range: [1, 10000],
+      baseUnit: "J",
+      units: [
+        { name: "줄 (W·s = N·m)", sym: "J", factor: 1.0, isSI: true },
+        { name: "킬로와트시", sym: "kW·h", factor: 3.6e6, isSI: false },
+        { name: "킬로그램힘미터", sym: "kgf·m", factor: 9.80665, isSI: false },
+        { name: "킬로칼로리", sym: "kcal", factor: 4186.05, isSI: false }
+      ]
+    },
+    "동력": {
+      name: "동력·일률 (Power)",
+      symbol: "W",
+      range: [10, 5000],
+      baseUnit: "W",
+      units: [
+        { name: "와트 (J/s)", sym: "W", factor: 1.0, isSI: true },
+        { name: "킬로와트", sym: "kW", factor: 1e3, isSI: false },
+        { name: "킬로그램힘미터/초", sym: "kgf·m/s", factor: 9.80665, isSI: false },
+        { name: "미터마력", sym: "PS", factor: 735.5, isSI: false },
+        { name: "킬로칼로리/시", sym: "kcal/h", factor: 1.16279, isSI: false }
+      ]
+    },
+    "온도": {
+      name: "온도 (Temperature)",
+      symbol: "°C",
+      range: [-40, 200],
+      baseUnit: "°C",
+      isTemperature: true,
+      units: [
+        { name: "섭씨도", sym: "°C", isSI: false },
+        { name: "절대온도 켈빈", sym: "K", isSI: true },
+        { name: "화씨도", sym: "°F", isSI: false }
+      ]
+    },
+    "회전수": {
+      name: "회전수 (Rotational speed)",
+      symbol: "r.p.m.",
+      range: [60, 3600],
+      baseUnit: "r.p.m.",
+      units: [
+        { name: "분당 회전수", sym: "r.p.m.", factor: 1.0, isSI: false },
+        { name: "초당 회전수", sym: "s⁻¹", factor: 60.0, isSI: true },
+        { name: "분당 역초수", sym: "min⁻¹", factor: 1.0, isSI: false }
+      ]
+    }
+  };
+
+  // State
+  let currentCategory = "힘";
+  let currentValue = 1.0;
+  let currentStep = 1.0;
+  let audioEnabled = true;
+  let audioCtx = null;
+
+  // DOM Elements
+  const categoryButtonGroup = document.getElementById("categoryButtonGroup");
+  const bottomPushRow = document.getElementById("bottomPushRow");
+  const directNumberInput = document.getElementById("directNumberInput");
+  const baseUnitSymbol = document.getElementById("baseUnitSymbol");
+  const currentCategoryDisplay = document.getElementById("currentCategoryDisplay");
+  const convertedOutputsList = document.getElementById("convertedOutputsList");
+  const tuningNeedle = document.getElementById("tuningNeedle");
+  const radioScaleWindow = document.getElementById("radioScaleWindow");
+  const scaleTicksGroup = document.getElementById("scaleTicksGroup");
+  const rotaryKnob = document.getElementById("rotaryKnob");
+  const knobIndicator = document.getElementById("knobIndicator");
+  const freqIndexText = document.getElementById("freqIndexText");
+  const copyNotification = document.getElementById("copyNotification");
+
+  function playClickSound(frequency = 700, decay = 0.04) {
+    if (!audioEnabled) return;
+    try {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + decay);
+      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + decay);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + decay);
+    } catch (e) {
+      console.warn("Audio Context blocked until interaction", e);
+    }
+  }
+
+  function toggleAudio() {
+    audioEnabled = !audioEnabled;
+    document.getElementById("soundIcon").textContent = audioEnabled ? "🔊" : "🔇";
+    document.getElementById("soundLabel").textContent = audioEnabled ? "기계음 켬" : "기계음 끔";
+  }
+
+  function initCategories() {
+    categoryButtonGroup.innerHTML = "";
+    bottomPushRow.innerHTML = "";
+
+    const catKeys = Object.keys(SI_DATABASE);
+    catKeys.forEach((key) => {
+      // Left Group Buttons
+      const btn = document.createElement("button");
+      btn.className = `w-full text-left px-3.5 py-2.5 rounded-lg text-xs font-semibold flex items-center justify-between transition ${
+        key === currentCategory
+          ? "bg-white shadow-sm border border-black/10 text-black"
+          : "text-[#5e5b53] hover:bg-black/5"
+      }`;
+      btn.innerHTML = `
+        <span class="flex items-center gap-2">
+          <span class="w-3.5 h-3.5 rounded-full border border-black/20 ${key === currentCategory ? 'bg-[#d63826] shadow-sm' : 'bg-[#bcc4b9]'}"></span>
+          <span>${SI_DATABASE[key].name}</span>
+        </span>
+        <span class="font-mono text-[11px] text-[#8c887e]">${SI_DATABASE[key].symbol}</span>
+      `;
+      btn.onclick = () => selectCategory(key);
+      categoryButtonGroup.appendChild(btn);
+
+      // Bottom Row Round Push Buttons
+      const pushWrap = document.createElement("div");
+      pushWrap.className = "flex flex-col items-center gap-1.5";
+
+      const roundBtn = document.createElement("button");
+      roundBtn.className = `round-push-btn ${key === currentCategory ? 'active' : ''}`;
+      roundBtn.setAttribute("data-cat", key);
+      roundBtn.onclick = () => selectCategory(key);
+
+      const label = document.createElement("span");
+      label.className = "text-[10px] font-medium text-[#5c5850]";
+      label.textContent = key;
+
+      pushWrap.appendChild(roundBtn);
+      pushWrap.appendChild(label);
+      bottomPushRow.appendChild(pushWrap);
+    });
+  }
+
+  function selectCategory(catKey) {
+    currentCategory = catKey;
+    playClickSound(850, 0.05);
+
+    const catData = SI_DATABASE[catKey];
+    currentCategoryDisplay.textContent = `선택: ${catData.name}`;
+    baseUnitSymbol.textContent = catData.baseUnit;
+
+    // Reset base value within realistic category default
+    currentValue = catData.range[0] * 1.0 + (catData.range[1] - catData.range[0]) * 0.3;
+    if (!catData.isTemperature) {
+      currentValue = Math.round(currentValue * 10) / 10;
+    } else {
+      currentValue = 25.0; // Standard ambient
+    }
+    directNumberInput.value = currentValue.toFixed(1);
+
+    initCategories();
+    drawScaleTicks();
+    updateTuningNeedlePosition();
+    renderOutputs();
+  }
+
+  function drawScaleTicks() {
+    scaleTicksGroup.innerHTML = "";
+    const catData = SI_DATABASE[currentCategory];
+    const [minVal, maxVal] = catData.range;
+    const ticksCount = 20;
+
+    for (let i = 0; i <= ticksCount; i++) {
+      const pct = (i / ticksCount) * 100;
+      const isMajor = i % 4 === 0;
+      const tickLength = isMajor ? 26 : 14;
+
+      // Simulated radio frequency value top to bottom
+      const val = maxVal - (i / ticksCount) * (maxVal - minVal);
+      const displayVal = val >= 1000 ? (val/1000).toFixed(1) + 'k' : (val < 1 ? val.toFixed(2) : Math.round(val));
+
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", "15");
+      line.setAttribute("y1", `${pct}%`);
+      line.setAttribute("x2", `${15 + tickLength}`);
+      line.setAttribute("y2", `${pct}%`);
+      line.setAttribute("stroke", isMajor ? "#292723" : "#7c776b");
+      line.setAttribute("stroke-width", isMajor ? "1.5" : "1");
+      scaleTicksGroup.appendChild(line);
+
+      if (isMajor) {
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        text.setAttribute("x", "52");
+        text.setAttribute("y", `${pct + 1.2}%`);
+        text.setAttribute("font-family", "JetBrains Mono, monospace");
+        text.setAttribute("font-size", "10");
+        text.setAttribute("fill", "#545048");
+        text.textContent = displayVal;
+        scaleTicksGroup.appendChild(text);
+      }
+    }
+  }
+
+  function updateTuningNeedlePosition() {
+    const catData = SI_DATABASE[currentCategory];
+    const [minVal, maxVal] = catData.range;
+    
+    // Top is maxVal (0%), bottom is minVal (100%)
+    let clampedVal = Math.min(Math.max(currentValue, minVal), maxVal);
+    const ratio = (clampedVal - minVal) / (maxVal - minVal);
+    const needleTopPct = (1.0 - ratio) * 100;
+
+    tuningNeedle.style.top = `${Math.min(Math.max(needleTopPct, 2), 98)}%`;
+
+    // Simulated Radio frequency equivalent
+    const pseudoFreq = (150 + ratio * 190).toFixed(1);
+    freqIndexText.textContent = `${pseudoFreq} kHz eq.`;
+  }
+
+  function adjustNeedle(direction) {
+    playClickSound(direction > 0 ? 920 : 680, 0.025);
+    const catData = SI_DATABASE[currentCategory];
+    const [minVal, maxVal] = catData.range;
+    const span = maxVal - minVal;
+    
+    // Incremental step
+    let stepAmount = currentStep;
+    if (span > 1000 && currentStep < 5) stepAmount = span * 0.02;
+
+    currentValue += direction * stepAmount;
+    if (currentValue < minVal) currentValue = minVal;
+    if (currentValue > maxVal) currentValue = maxVal;
+
+    directNumberInput.value = currentValue.toFixed(2);
+    updateTuningNeedlePosition();
+    renderOutputs();
+  }
+
+  function setStep(step) {
+    currentStep = step;
+    playClickSound(800, 0.02);
+    document.querySelectorAll(".step-btn").forEach(btn => {
+      btn.classList.toggle("font-bold", parseFloat(btn.textContent) === step);
+    });
+  }
+
+  function renderOutputs() {
+    convertedOutputsList.innerHTML = "";
+    const catData = SI_DATABASE[currentCategory];
+
+    catData.units.forEach((unit) => {
+      let converted = 0;
+
+      if (catData.isTemperature) {
+        // Temperature conversion
+        const celsius = currentValue;
+        if (unit.sym === "°C") converted = celsius;
+        else if (unit.sym === "K") converted = celsius + 273.15;
+        else if (unit.sym === "°F") converted = (celsius * 9/5) + 32;
+      } else {
+        // Regular SI factor conversion
+        // Value in standard SI base = currentValue * baseUnit.factor
+        const baseUnitObj = catData.units.find(u => u.sym === catData.baseUnit);
+        const valInSI = currentValue * (baseUnitObj ? baseUnitObj.factor : 1.0);
+        converted = valInSI / unit.factor;
+      }
+
+      // Normal display & Scientific exponential format
+      const normalStr = formatNormal(converted);
+      const expStr = formatScientific(converted);
+
+      const row = document.createElement("div");
+      row.className = "flex items-center justify-between p-2.5 rounded-lg bg-[#171e1a] border border-[#26372f] hover:border-[#38e1b6]/50 transition group";
+      row.innerHTML = `
+        <div class="flex items-center gap-2">
+          ${unit.isSI ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#d63826] text-white">SI</span>' : '<span class="w-4"></span>'}
+          <div>
+            <div class="text-xs font-medium text-[#d9fff5] flex items-center gap-1.5">
+              <span>${unit.name}</span>
+              <span class="font-mono text-[11px] text-[#699e90]">(${unit.sym})</span>
+            </div>
+            <div class="text-[10px] font-mono text-[#5b877a]">${expStr}</div>
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="text-sm font-bold font-mono text-[#42f5c8] tracking-wide">${normalStr}</div>
+          <button onclick="copySingleValue('${converted}', '${unit.sym}')" class="text-[10px] text-[#5b877a] hover:text-[#42f5c8] underline opacity-0 group-hover:opacity-100 transition">
+            복사
+          </button>
+        </div>
+      `;
+      convertedOutputsList.appendChild(row);
+    });
+  }
+
+  function formatNormal(val) {
+    if (val === 0) return "0";
+    const abs = Math.abs(val);
+    if (abs >= 0.001 && abs < 1e7) {
+      return parseFloat(val.toFixed(6)).toLocaleString('ko-KR', { maximumFractionDigits: 6 });
+    }
+    return val.toExponential(4);
+  }
+
+  function formatScientific(val) {
+    if (val === 0) return "0.0000 × 10⁰";
+    const expStr = val.toExponential(5);
+    const [mantissa, exponent] = expStr.split("e");
+    const expInt = parseInt(exponent, 10);
+    const superscripts = {
+      '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³',
+      '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹'
+    };
+    const supExp = String(expInt).split('').map(ch => superscripts[ch] || ch).join('');
+    return `${mantissa} × 10${supExp}`;
+  }
+
+  // Direct Input Listener
+  directNumberInput.addEventListener("input", (e) => {
+    const val = parseFloat(e.target.value);
+    if (!isNaN(val)) {
+      currentValue = val;
+      updateTuningNeedlePosition();
+      renderOutputs();
+    }
+  });
+
+  // Vertical Tuner Dragging
+  let isDraggingWindow = false;
+  radioScaleWindow.addEventListener("mousedown", (e) => {
+    isDraggingWindow = true;
+    handleWindowTuning(e);
+  });
+  window.addEventListener("mousemove", (e) => {
+    if (isDraggingWindow) handleWindowTuning(e);
+  });
+  window.addEventListener("mouseup", () => {
+    isDraggingWindow = false;
+  });
+
+  function handleWindowTuning(e) {
+    const rect = radioScaleWindow.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    const ratio = Math.min(Math.max(y / rect.height, 0), 1);
+    
+    // Invert: top is max, bottom is min
+    const catData = SI_DATABASE[currentCategory];
+    const [minVal, maxVal] = catData.range;
+    currentValue = maxVal - ratio * (maxVal - minVal);
+    currentValue = Math.round(currentValue * 10) / 10;
+    
+    directNumberInput.value = currentValue.toFixed(1);
+    updateTuningNeedlePosition();
+    renderOutputs();
+    playClickSound(600 + (1 - ratio) * 400, 0.015);
+  }
+
+  // Rotary Knob Drag Interaction
+  let isDraggingKnob = false;
+  let startY = 0;
+  let knobAngle = 0;
+
+  rotaryKnob.addEventListener("mousedown", (e) => {
+    isDraggingKnob = true;
+    startY = e.clientY;
+  });
+
+  window.addEventListener("mousemove", (e) => {
+    if (!isDraggingKnob) return;
+    const diff = startY - e.clientY;
+    if (Math.abs(diff) > 2) {
+      const dir = diff > 0 ? 1 : -1;
+      adjustNeedle(dir);
+      knobAngle += dir * 15;
+      knobIndicator.style.transform = `rotate(${knobAngle}deg)`;
+      startY = e.clientY;
+    }
+  });
+
+  window.addEventListener("mouseup", () => {
+    isDraggingKnob = false;
+  });
+
+  // Keyboard navigation (Arrow Up/Down)
+  window.addEventListener("keydown", (e) => {
+    if (e.target === directNumberInput) return;
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      adjustNeedle(1);
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      adjustNeedle(-1);
+    }
+  });
+
+  // Mouse wheel over tuner window
+  radioScaleWindow.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    adjustNeedle(e.deltaY < 0 ? 1 : -1);
+  }, { passive: false });
+
+  // Clipboard Utilities
+  function copyAllResults() {
+    const catData = SI_DATABASE[currentCategory];
+    let text = `[BRAUN SI 변환 결과: ${catData.name}]\n기준값: ${currentValue} ${catData.baseUnit}\n\n`;
+    
+    catData.units.forEach(u => {
+      let converted = 0;
+      if (catData.isTemperature) {
+        if (u.sym === "°C") converted = currentValue;
+        else if (u.sym === "K") converted = currentValue + 273.15;
+        else if (u.sym === "°F") converted = (currentValue * 9/5) + 32;
+      } else {
+        const base = catData.units.find(item => item.sym === catData.baseUnit);
+        converted = (currentValue * base.factor) / u.factor;
+      }
+      text += `${u.name} (${u.sym}): ${formatNormal(converted)} [${formatScientific(converted)}]\n`;
+    });
+
+    const dummy = document.createElement("textarea");
+    dummy.value = text;
+    document.body.appendChild(dummy);
+    dummy.select();
+    document.execCommand("copy");
+    document.body.removeChild(dummy);
+
+    copyNotification.textContent = "✓ 클립보드 복사 완료!";
+    copyNotification.style.color = "#278e6c";
+    setTimeout(() => {
+      copyNotification.textContent = "클릭하여 전체 복사";
+      copyNotification.style.color = "#737069";
+    }, 2000);
+  }
+
+  function copySingleValue(val, sym) {
+    const dummy = document.createElement("textarea");
+    dummy.value = `${val} ${sym}`;
+    document.body.appendChild(dummy);
+    dummy.select();
+    document.execCommand("copy");
+    document.body.removeChild(dummy);
+
+    copyNotification.textContent = `✓ ${sym} 값 복사 완료`;
+    setTimeout(() => {
+      copyNotification.textContent = "클릭하여 전체 복사";
+    }, 1800);
+  }
+
+  function resetValue() {
+    currentValue = 1.0;
+    directNumberInput.value = "1.00";
+    updateTuningNeedlePosition();
+    renderOutputs();
+    playClickSound(900, 0.04);
+  }
+
+  // Start Application
+  window.addEventListener("DOMContentLoaded", () => {
+    initCategories();
+    selectCategory("힘");
+  });
+</script>
+</body>
+</html>
