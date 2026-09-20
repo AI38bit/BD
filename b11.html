@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>정밀 맞물림 다이아몬드 벌집 갤러리</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #18191a;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    /*
+      [완벽한 맞물림 기하학 원리]
+      타일 크기: 160px x 160px (스팬: 가로 2칸, 세로 2칸)
+      그리드 셀 크기: 가로 80px, 세로 80px (타일 너비와 높이의 정확히 절반)
+      
+      - 1행(위): 1행 라인(0px)에서 시작하여 1, 3, 5열에 위치 (꼭짓점끼리 좌우 맞닿음)
+      - 2행(중간): 2행 라인(80px 아래)에서 시작하여 2, 4열에 위치 (1행의 V자 골짜기에 완벽히 안착)
+      - 3행(아래): 3행 라인(160px 아래)에서 시작하여 3열 등에 위치
+    */
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(6, 80px);
+      grid-template-rows: repeat(4, 80px);
+      width: 480px;
+      height: 320px;
+      position: relative;
+      user-select: none;
+    }
+
+    .gallery img {
+      width: 160px;
+      height: 160px;
+      object-fit: cover;
+      grid-column: span 2;
+      grid-row: span 2;
+      cursor: pointer;
+
+      /* 기본 다이아몬드 형태: 모서리가 살짝 둥근 160x160 마름모 (8개의 제어점으로 대칭 매핑) */
+      clip-path: path('M 80 8 C 88 16, 144 72, 152 80 C 144 88, 88 144, 80 152 C 72 144, 16 88, 8 80 C 16 72, 72 16, 80 8 Z');
+      
+      /* 호버 트랜지션: 0.25초 부드러운 형태 및 필터 변환 */
+      transition: 
+        clip-path 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+        filter 0.25s ease,
+        transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+        box-shadow 0.25s ease;
+      position: relative;
+      z-index: 1;
+      will-change: clip-path, transform, filter;
+    }
+
+    /* 1행 (상단 3개: 1열, 3열, 5열 / 1행 라인에서 시작) */
+    .gallery img:nth-child(1) {
+      grid-column-start: 1;
+      grid-row-start: 1;
+    }
+    .gallery img:nth-child(2) {
+      grid-column-start: 3;
+      grid-row-start: 1;
+    }
+    .gallery img:nth-child(3) {
+      grid-column-start: 5;
+      grid-row-start: 1;
+    }
+
+    /* 2행 (중간 2개: 1행 타일 사이의 V홈에 밀착 삽입 / 2열, 4열 / 2행 라인에서 시작) */
+    .gallery img:nth-child(4) {
+      grid-column-start: 2;
+      grid-row-start: 2;
+    }
+    .gallery img:nth-child(5) {
+      grid-column-start: 4;
+      grid-row-start: 2;
+    }
+
+    /* 3행 (하단 1개: 2행 사이의 홈에 맞물림 / 3열 / 3행 라인에서 시작) */
+    .gallery img:nth-child(6) {
+      grid-column-start: 3;
+      grid-row-start: 3;
+    }
+
+    /* 갤러리에 커서가 진입하면 모든 형제 타일들의 밝기와 대비를 다운 */
+    .gallery:hover img {
+      filter: brightness(0.38) contrast(0.85);
+    }
+
+    /* 마우스를 올린 타일: 모서리가 둥근 사각형으로 펼쳐지며 전면 강조 */
+    .gallery img:hover {
+      /* 사각형으로 모핑: 동일한 수의 제어점(M 1개, C 4개, Z)으로 매끄럽게 보간 */
+      clip-path: path('M 12 8 C 80 8, 80 8, 148 8 C 152 80, 152 80, 152 148 C 80 152, 80 152, 12 152 C 8 80, 8 80, 8 12 Z');
+      filter: brightness(1.05) contrast(1.05);
+      transform: scale(1.15);
+      z-index: 20;
+    }
+  </style>
+</head>
+<body>
+
+  <main class="gallery">
+    <img src="q1.jpg" alt="Gallery Image 1" onerror="this.onerror=null;this.src='https://picsum.photos/seed/view1/400/400'">
+    <img src="q2.jpg" alt="Gallery Image 2" onerror="this.onerror=null;this.src='https://picsum.photos/seed/view2/400/400'">
+    <img src="q3.jpg" alt="Gallery Image 3" onerror="this.onerror=null;this.src='https://picsum.photos/seed/view3/400/400'">
+    <img src="q4.jpg" alt="Gallery Image 4" onerror="this.onerror=null;this.src='https://picsum.photos/seed/view4/400/400'">
+    <img src="q5.jpg" alt="Gallery Image 5" onerror="this.onerror=null;this.src='https://picsum.photos/seed/view5/400/400'">
+    <img src="q6.jpg" alt="Gallery Image 6" onerror="this.onerror=null;this.src='https://picsum.photos/seed/view6/400/400'">
+  </main>
+
+</body>
+</html>

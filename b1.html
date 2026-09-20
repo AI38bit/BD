@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>홍길동의 프로필 카드 | Glassmorphism & Vibration</title>
+  <!-- Google Fonts & Lucide Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    :root {
+      /* 글래스모피즘 공통 컬러 & 반투명 변수 */
+      --glass-base: rgba(255, 255, 255, 0.13);
+      --glass-base-hover: rgba(255, 255, 255, 0.24);
+      --glass-border: rgba(255, 255, 255, 0.28);
+      --glass-border-light: rgba(255, 255, 255, 0.6);
+      --glass-inner-glow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.4);
+
+      /* 글래스 섀도우 효과 */
+      --glass-shadow: 0 16px 36px 0 rgba(0, 5, 20, 0.35);
+      --glass-shadow-hover: 0 20px 45px 0 rgba(0, 10, 35, 0.55);
+
+      --text-main: #ffffff;
+      --text-sub: rgba(255, 255, 255, 0.88);
+      --text-muted: rgba(240, 246, 255, 0.65);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      /* 산속 오두막 및 은하수 배경 이미지 */
+      background: url('image_5d3241.png') no-repeat center center fixed;
+      background-size: cover;
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2.5rem 1rem;
+      position: relative;
+    }
+
+    /* 배경 감성을 살려주는 은은한 비네팅 오버레이 */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(15, 23, 42, 0.08) 0%, rgba(10, 15, 30, 0.45) 100%);
+      pointer-events: none;
+    }
+
+    /* =========================================================
+       롤오버 진동(Vibration / Shake) 애니메이션 정의
+    ========================================================= */
+    @keyframes glass-vibrate {
+      0% {
+        transform: translate(0, 0) rotate(0deg);
+      }
+      20% {
+        transform: translate(-1.5px, 1.5px) rotate(-0.6deg);
+      }
+      40% {
+        transform: translate(-1.5px, -1.5px) rotate(0.6deg);
+      }
+      60% {
+        transform: translate(1.5px, 1.5px) rotate(0deg);
+      }
+      80% {
+        transform: translate(1.5px, -1.5px) rotate(0.6deg);
+      }
+      100% {
+        transform: translate(0, 0) rotate(-0.6deg);
+      }
+    }
+
+    /* 메인 글래스 컨테이너 */
+    .glass-profile-card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 500px;
+      background: rgba(18, 26, 45, 0.35);
+      backdrop-filter: blur(24px) saturate(160%);
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
+      border-radius: 36px;
+      border: 1.5px solid var(--glass-border);
+      box-shadow: 0 25px 55px -10px rgba(0, 0, 0, 0.5), var(--glass-inner-glow);
+      padding: 2.2rem 1.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.35rem;
+      overflow: hidden;
+    }
+
+    /* 공통 글래스 나눔 패널 */
+    .glass-panel {
+      background: var(--glass-base);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 24px;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow), var(--glass-inner-glow);
+      cursor: pointer;
+      will-change: transform;
+      transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    /* [핵심 기능] 롤오버 동안 진동 애니메이션 연속 실행 */
+    .glass-panel:hover,
+    .glass-btn:hover {
+      animation: glass-vibrate 0.18s infinite linear;
+      background: var(--glass-base-hover) !important;
+      border-color: var(--glass-border-light) !important;
+      box-shadow: var(--glass-shadow-hover), var(--glass-inner-glow) !important;
+    }
+
+    /* 1. 상단 프로필 헤더 */
+    .profile-header {
+      padding: 1.8rem 1.4rem 1.4rem;
+      text-align: center;
+    }
+
+    .avatar-wrapper {
+      position: relative;
+      width: 110px;
+      height: 110px;
+      margin: 0 auto 1.1rem;
+      cursor: pointer;
+    }
+
+    .avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top center;
+      border-radius: 50%;
+      border: 3px solid rgba(255, 255, 255, 0.85);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .avatar-wrapper:hover .avatar-img {
+      transform: scale(1.08) rotate(3deg);
+      border-color: #93c5fd;
+    }
+
+    .avatar-badge {
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      background: rgba(30, 41, 59, 0.85);
+      backdrop-filter: blur(8px);
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1.5px solid rgba(255, 255, 255, 0.65);
+      color: #93c5fd;
+    }
+
+    .name-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      letter-spacing: -0.02em;
+    }
+
+    .sub-tag {
+      display: inline-block;
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.3rem 0.9rem;
+      border-radius: 999px;
+      background: rgba(147, 197, 253, 0.2);
+      color: #bfdbfe;
+      border: 1px solid rgba(147, 197, 253, 0.4);
+      backdrop-filter: blur(8px);
+    }
+
+    .bio-text {
+      margin-top: 0.85rem;
+      font-size: 0.92rem;
+      color: var(--text-sub);
+      line-height: 1.6;
+      word-break: keep-all;
+    }
+
+    /* 섹션 라벨 */
+    .section-title {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      margin-bottom: 0.65rem;
+      padding-left: 0.2rem;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.35);
+    }
+
+    /* 2. 취미 글래스 그리드 */
+    .hobbies-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.9rem;
+    }
+
+    .hobby-card {
+      padding: 1.3rem 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .hobby-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.16);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 0.65rem;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    .hobby-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 0.25rem;
+    }
+
+    .hobby-desc {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.35;
+    }
+
+    /* 3. 통계 글래스 패널 */
+    .stats-panel {
+      padding: 1rem;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.15rem;
+    }
+
+    .stat-label {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+    }
+
+    .stat-value {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #93c5fd;
+      text-shadow: 0 0 14px rgba(147, 197, 253, 0.6);
+    }
+
+    .stat-divider {
+      width: 1px;
+      height: 24px;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* 4. 액션 버튼 영역 */
+    .actions-grid {
+      display: flex;
+      gap: 0.8rem;
+    }
+
+    .glass-btn {
+      flex: 1;
+      padding: 0.95rem 1.1rem;
+      border-radius: 20px;
+      border: 1px solid var(--glass-border);
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      color: var(--text-main);
+      font-size: 0.92rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      box-shadow: var(--glass-shadow), var(--glass-inner-glow);
+      will-change: transform;
+      transition: background 0.25s, border-color 0.25s;
+    }
+
+    .glass-btn:active {
+      transform: scale(0.95) !important;
+      animation: none !important;
+    }
+
+    .btn-cheer {
+      background: linear-gradient(135deg, rgba(251, 113, 133, 0.38) 0%, rgba(244, 63, 94, 0.48) 100%);
+      border-color: rgba(251, 113, 133, 0.55);
+    }
+
+    /* 5. 방명록 글래스 패널 */
+    .guestbook-panel {
+      padding: 1.15rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      cursor: default; /* 입력 편의를 위해 기본 커서 */
+    }
+
+    /* 방명록 전체 패널은 마우스가 올라가도 진동하지 않고 안정적인 입력을 보장 */
+    .guestbook-panel:hover {
+      animation: none;
+      background: var(--glass-base);
+    }
+
+    .input-box {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .glass-input {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      border-radius: 16px;
+      border: 1px solid var(--glass-border);
+      background: rgba(15, 23, 42, 0.35);
+      backdrop-filter: blur(10px);
+      color: var(--text-main);
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .glass-input::placeholder {
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    .glass-input:focus {
+      background: rgba(15, 23, 42, 0.55);
+      border-color: #93c5fd;
+    }
+
+    .btn-send {
+      padding: 0 1.2rem;
+      border-radius: 16px;
+      border: 1px solid rgba(147, 197, 253, 0.4);
+      background: rgba(59, 130, 246, 0.38);
+      color: #ffffff;
+      font-weight: 700;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: all 0.2s;
+    }
+
+    .btn-send:hover {
+      animation: glass-vibrate 0.18s infinite linear;
+      background: rgba(59, 130, 246, 0.65);
+      border-color: #93c5fd;
+    }
+
+    .message-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      max-height: 100px;
+      overflow-y: auto;
+    }
+
+    .message-bubble {
+      padding: 0.5rem 0.8rem;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      border-left: 3px solid #93c5fd;
+      font-size: 0.82rem;
+      color: var(--text-sub);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.2s;
+    }
+
+    .message-bubble:hover {
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    /* 플로팅 별빛 효과 */
+    .floating-star {
+      position: fixed;
+      font-size: 1.4rem;
+      pointer-events: none;
+      animation: floatStar 1s ease-out forwards;
+      z-index: 9999;
+    }
+
+    @keyframes floatStar {
+      0% { opacity: 1; transform: translate(-50%, 0) scale(0.8); }
+      100% { opacity: 0; transform: translate(-50%, -85px) scale(1.4); }
+    }
+
+    /* 토스트 알림창 */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border-light);
+      color: #ffffff;
+      padding: 0.75rem 1.4rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 9999;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <main class="glass-profile-card">
+    
+    <!-- 1. 프로필 메인 헤더 글래스 (롤오버 시 진동) -->
+    <header class="glass-panel profile-header">
+      <div class="avatar-wrapper" onclick="document.getElementById('fileInput').click()" title="클릭하여 프로필 사진 변경">
+        <img id="avatarImg" class="avatar-img" src="image_5ccccb.png" alt="홍길동 아바타" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&h=300&fit=crop'">
+        <div class="avatar-badge">
+          <i data-lucide="camera" style="width: 15px; height: 15px;"></i>
+        </div>
+        <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="changeAvatar(event)">
+      </div>
+
+      <h1 class="name-title">
+        홍길동 <span style="font-size: 1.15rem;">🌌</span>
+      </h1>
+      <span class="sub-tag">독서와 밤산행을 즐기는 낭만 여행자</span>
+      <p class="bio-text">
+        밤하늘의 별빛처럼 깊어지는 책의 문장들과,<br>
+        오두막 너머 새벽 안개를 맞이하는 등산을 사랑합니다.
+      </p>
+    </header>
+
+    <!-- 2. 취미 글래스 메뉴 (각각 롤오버 시 개별 진동) -->
+    <section>
+      <div class="section-title">
+        <i data-lucide="compass" style="width: 17px; height: 17px; color: #93c5fd;"></i>
+        <span>취미 및 관심사</span>
+      </div>
+      <div class="hobbies-grid">
+        <!-- 독서 메뉴 -->
+        <div class="glass-panel hobby-card" onclick="openHobby('독서 📚', '조용한 밤, 책장을 넘기며 별처럼 반짝이는 통찰을 마주합니다.')">
+          <div class="hobby-icon">📚</div>
+          <h2 class="hobby-title">독서</h2>
+          <p class="hobby-desc">고요한 밤사이에 사유를 넓혀가는 시간</p>
+        </div>
+
+        <!-- 등산 메뉴 -->
+        <div class="glass-panel hobby-card" onclick="openHobby('등산 🏔️', '산자락 산장 너머 은하수를 바라보며 정상을 오르는 도전입니다.')">
+          <div class="hobby-icon">🏔️</div>
+          <h2 class="hobby-title">등산</h2>
+          <p class="hobby-desc">자연의 고요함과 시원한 공기를 호흡하는 여정</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. 통계 글래스 메뉴 (롤오버 시 진동) -->
+    <section class="glass-panel stats-panel">
+      <div class="stat-item">
+        <span class="stat-label">올해 완독</span>
+        <span class="stat-value">24권</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-label">등반한 산</span>
+        <span class="stat-value">18곳</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-label">별빛 응원</span>
+        <span class="stat-value" id="starCount">142</span>
+      </div>
+    </section>
+
+    <!-- 4. 글래스 버튼 바 (롤오버 시 진동) -->
+    <section class="actions-grid">
+      <button class="glass-btn btn-cheer" onclick="sendStar(event)">
+        <i data-lucide="sparkles" style="width: 18px; height: 18px;"></i>
+        <span>별빛 응원하기</span>
+      </button>
+      <button class="glass-btn" onclick="copyContact()">
+        <i data-lucide="mail" style="width: 18px; height: 18px;"></i>
+        <span>연락처 복사</span>
+      </button>
+    </section>
+
+    <!-- 5. 글래스 방명록 섹션 (안정적인 텍스트 입력을 위해 등록 버튼에 진동 적용) -->
+    <section class="glass-panel guestbook-panel">
+      <div class="section-title" style="margin-bottom: 0;">
+        <i data-lucide="message-square" style="width: 16px; height: 16px; color: #c4b5fd;"></i>
+        <span>방명록 한 줄</span>
+      </div>
+      <div class="input-box">
+        <input type="text" id="guestInput" class="glass-input" placeholder="홍길동 님에게 따뜻한 한마디를 남겨주세요" onkeypress="if(event.key==='Enter') submitMessage()">
+        <button class="btn-send" onclick="submitMessage()">남기기</button>
+      </div>
+      <ul class="message-list" id="messageList">
+        <li class="message-bubble">
+          <span>"배경의 오두막과 은하수가 너무 멋져요! ✨"</span>
+          <span style="font-size: 0.7rem; color: rgba(255,255,255,0.45);">방금</span>
+        </li>
+      </ul>
+    </section>
+
+  </main>
+
+  <!-- 토스트 알림창 -->
+  <div class="toast" id="toast">이메일 주소가 복사되었습니다 📋</div>
+
+  <script>
+    // Lucide 아이콘 초기화
+    lucide.createIcons();
+
+    // 프로필 사진 변경
+    function changeAvatar(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('avatarImg').src = e.target.result;
+          showToast('프로필 이미지가 변경되었습니다 ✨');
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    // 별빛 응원 카운터 및 파티클
+    let count = 142;
+    function sendStar(e) {
+      count++;
+      document.getElementById('starCount').innerText = count;
+
+      const star = document.createElement('div');
+      star.className = 'floating-star';
+      star.innerText = ['✨', '⭐', '💫', '🌟'][Math.floor(Math.random() * 4)];
+      star.style.left = `${e.clientX || window.innerWidth / 2}px`;
+      star.style.top = `${e.clientY || window.innerHeight / 2}px`;
+      document.body.appendChild(star);
+
+      setTimeout(() => star.remove(), 1000);
+    }
+
+    // 이메일 클립보드 복사
+    function copyContact() {
+      const email = 'gildong.hong@example.com';
+      navigator.clipboard.writeText(email).then(() => {
+        showToast('이메일 주소가 복사되었습니다 📋');
+      }).catch(() => {
+        showToast(email);
+      });
+    }
+
+    // 취미 팝업 안내
+    function openHobby(title, content) {
+      alert(`[${title}]\n\n${content}`);
+    }
+
+    // 방명록 등록
+    function submitMessage() {
+      const input = document.getElementById('guestInput');
+      const val = input.value.trim();
+      if (!val) return;
+
+      const list = document.getElementById('messageList');
+      const li = document.createElement('li');
+      li.className = 'message-bubble';
+      li.innerHTML = `<span>"${escapeHtml(val)}"</span><span style="font-size: 0.7rem; color: rgba(255,255,255,0.45);">방금</span>`;
+      list.prepend(li);
+
+      input.value = '';
+      showToast('응원 메시지가 저장되었습니다 💌');
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+      );
+    }
+
+    // 토스트 안내 함수
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2200);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>전국 컵라면 감별사! 서바이벌 OX 퀴즈</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Canvas Confetti for Celebration Effects -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Google Web Fonts (Jua for game title, Pretendard/Noto for body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .game-font {
+      font-family: 'Jua', cursive;
+    }
+    /* 3D Survival Action Buttons */
+    .btn-action-o {
+      background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
+      box-shadow: 0 7px 0 #0369a1, 0 10px 18px rgba(2, 132, 199, 0.4);
+      transition: transform 0.08s ease, box-shadow 0.08s ease;
+    }
+    .btn-action-o:active {
+      transform: translateY(5px);
+      box-shadow: 0 2px 0 #0369a1, 0 4px 8px rgba(2, 132, 199, 0.4);
+    }
+    .btn-action-x {
+      background: linear-gradient(180deg, #f87171 0%, #dc2626 100%);
+      box-shadow: 0 7px 0 #991b1b, 0 10px 18px rgba(220, 38, 38, 0.4);
+      transition: transform 0.08s ease, box-shadow 0.08s ease;
+    }
+    .btn-action-x:active {
+      transform: translateY(5px);
+      box-shadow: 0 2px 0 #991b1b, 0 4px 8px rgba(220, 38, 38, 0.4);
+    }
+
+    /* Screen Shake on Wrong Answer */
+    @keyframes shakeScreen {
+      0%, 100% { transform: translateX(0); }
+      15% { transform: translateX(-14px) rotate(-1.5deg); }
+      35% { transform: translateX(12px) rotate(1.5deg); }
+      55% { transform: translateX(-9px) rotate(-0.8deg); }
+      75% { transform: translateX(7px) rotate(0.8deg); }
+    }
+    .shake-anim {
+      animation: shakeScreen 0.5s cubic-bezier(.36,.07,.19,.97) both;
+    }
+
+    /* Pop Animation for Quiz Items */
+    @keyframes popBounce {
+      0% { transform: scale(0.85); opacity: 0; }
+      60% { transform: scale(1.04); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .pop-anim {
+      animation: popBounce 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    /* Steam Particle Effect */
+    @keyframes steamFloat {
+      0% { transform: translateY(0) scaleX(1); opacity: 0; }
+      50% { opacity: 0.65; }
+      100% { transform: translateY(-38px) scaleX(1.4); opacity: 0; }
+    }
+    .steam-bubble {
+      position: absolute;
+      width: 10px;
+      height: 28px;
+      background: radial-gradient(circle, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0) 75%);
+      border-radius: 50%;
+      filter: blur(2.5px);
+      pointer-events: none;
+      animation: steamFloat 2.3s infinite ease-out;
+    }
+
+    /* Drop Zone Drag-over style */
+    .drag-over {
+      border-color: #f59e0b !important;
+      background-color: rgba(245, 158, 11, 0.15) !important;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-3 sm:p-5 select-none overflow-x-hidden">
+
+  <!-- Ambient background glow blobs -->
+  <div class="fixed inset-0 pointer-events-none overflow-hidden opacity-25">
+    <div class="absolute -top-24 -left-20 w-96 h-96 bg-amber-500 rounded-full blur-3xl"></div>
+    <div class="absolute -bottom-28 -right-20 w-96 h-96 bg-red-600 rounded-full blur-3xl"></div>
+    <div class="absolute top-1/3 left-1/2 -translate-x-1/2 w-80 h-80 bg-sky-600 rounded-full blur-3xl"></div>
+  </div>
+
+  <div id="game-app" class="relative w-full max-w-md bg-slate-900/95 backdrop-blur-xl border border-slate-700/80 rounded-3xl shadow-2xl p-4 sm:p-6 flex flex-col items-center">
+    
+    <!-- Top Header -->
+    <header class="w-full flex items-center justify-between mb-3 border-b border-slate-800 pb-3">
+      <div class="flex items-center space-x-2">
+        <span class="text-2xl animate-pulse">🍜</span>
+        <h1 class="game-font text-xl sm:text-2xl tracking-wide bg-gradient-to-r from-amber-400 via-orange-400 to-red-500 bg-clip-text text-transparent">
+          컵라면 서바이벌 OX
+        </h1>
+      </div>
+      <!-- Audio Toggle Button -->
+      <button id="sound-btn" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-semibold flex items-center space-x-1.5 border border-slate-700 transition">
+        <span id="sound-icon">🔊</span>
+        <span id="sound-label" class="text-slate-300">소리 ON</span>
+      </button>
+    </header>
+
+    <!-- Start Screen -->
+    <section id="screen-start" class="w-full flex flex-col items-center text-center py-2">
+      <!-- Mascot Banner -->
+      <div class="relative mb-3 group cursor-pointer" onclick="triggerEasterEgg()">
+        <div class="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl bg-gradient-to-tr from-amber-500 to-red-600 p-1 shadow-xl transform transition duration-300 group-hover:scale-105">
+          <div class="w-full h-full bg-slate-900 rounded-[14px] flex flex-col items-center justify-center p-2 relative overflow-hidden">
+            <span class="text-5xl sm:text-6xl animate-bounce">🍲</span>
+            <div class="mt-1 font-bold text-[11px] text-amber-300 game-font">
+              실사 9종 컵라면!
+            </div>
+          </div>
+        </div>
+        <div class="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-md animate-pulse">
+          서바이벌
+        </div>
+      </div>
+
+      <h2 class="game-font text-2xl text-white mb-1.5">면발과 건더기만 보고<br>이름을 맞출 수 있을까?</h2>
+      <p class="text-xs text-slate-300 mb-4 leading-relaxed max-w-xs">
+        포장지 없이 오직 속 내용물만 보고 맞추는 고난도 미식가 테스트! 제시된 라면 이름이 맞으면 <span class="text-sky-400 font-bold">O</span>, 틀리면 <span class="text-red-400 font-bold">X</span>!
+      </p>
+
+      <!-- Attached 3x3 Photo Manager & Status for ramen.jpg -->
+      <div id="drop-zone" class="w-full mb-4 bg-slate-950/80 border-2 border-dashed border-slate-700/80 hover:border-amber-500/80 rounded-2xl p-3 transition text-left flex flex-col items-center">
+        <div class="w-full flex items-center justify-between mb-1.5">
+          <div class="flex items-center space-x-1.5">
+            <span id="photo-status-icon" class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+            <span id="photo-status-title" class="text-xs font-bold text-slate-200">ramen.jpg 불러오는 중...</span>
+          </div>
+          <label class="text-[11px] text-amber-400 hover:text-amber-300 cursor-pointer font-bold underline">
+            수동 파일 선택
+            <input type="file" id="real-photo-input" accept="image/*" class="hidden">
+          </label>
+        </div>
+        <p id="photo-status-desc" class="text-[11px] text-slate-400 text-center w-full">
+          같은 폴더의 <code class="text-amber-300 font-mono bg-slate-800 px-1 py-0.5 rounded">ramen.jpg</code>를 자동으로 참조하여 3×3 정밀 슬라이스합니다.
+        </p>
+      </div>
+
+      <!-- Rule Chips -->
+      <div class="grid grid-cols-3 gap-2 w-full mb-4 text-xs text-slate-300">
+        <div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700">
+          <div class="font-bold text-amber-400 text-sm mb-0.5">총 10문제</div>
+          <div>랜덤 매칭</div>
+        </div>
+        <div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700">
+          <div class="font-bold text-sky-400 text-sm mb-0.5">100점 만점</div>
+          <div>문제당 10점</div>
+        </div>
+        <div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700">
+          <div class="font-bold text-emerald-400 text-sm mb-0.5">단축키 지원</div>
+          <div>O / X 및 ← / →</div>
+        </div>
+      </div>
+
+      <button id="start-btn" class="w-full py-4 bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-400 hover:to-red-400 text-white font-black text-xl rounded-2xl shadow-xl transform active:scale-95 transition game-font tracking-wider">
+        도전 시작하기! 🚀
+      </button>
+    </section>
+
+    <!-- Quiz Playing Screen -->
+    <section id="screen-game" class="w-full hidden flex-col items-center">
+      
+      <!-- Top HUD -->
+      <div class="w-full flex items-center justify-between mb-2 text-sm">
+        <div class="flex items-center space-x-2">
+          <span class="bg-amber-500/20 text-amber-300 font-bold px-3 py-1 rounded-full border border-amber-500/30 text-xs game-font" id="q-number-badge">
+            Q 1 / 10
+          </span>
+          <span id="combo-badge" class="hidden bg-red-500/20 text-red-400 font-bold px-2 py-0.5 rounded-md text-[11px]">
+            🔥 2연속!
+          </span>
+        </div>
+        <div class="flex items-center space-x-1.5 bg-slate-800/90 px-3 py-1 rounded-full border border-slate-700">
+          <span class="text-slate-400 text-xs">점수</span>
+          <span id="current-score" class="text-amber-400 font-black text-sm">0 / 100</span>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="w-full bg-slate-800 h-2 rounded-full mb-3 overflow-hidden border border-slate-700/50">
+        <div id="progress-bar-fill" class="h-full bg-gradient-to-r from-amber-400 to-orange-500 w-[10%] transition-all duration-300"></div>
+      </div>
+
+      <!-- Ramen Cropped Visual Box -->
+      <div class="relative w-full aspect-square max-w-[280px] sm:max-w-[300px] mb-3 flex items-center justify-center">
+        <div id="canvas-card" class="w-full h-full rounded-3xl bg-slate-950 p-2.5 border-2 border-slate-700 shadow-2xl flex items-center justify-center relative overflow-hidden">
+          
+          <!-- Steam Animation Particles -->
+          <div class="steam-bubble" style="left: 30%; top: 45%; animation-delay: 0s;"></div>
+          <div class="steam-bubble" style="left: 50%; top: 40%; animation-delay: 0.8s;"></div>
+          <div class="steam-bubble" style="left: 70%; top: 48%; animation-delay: 1.5s;"></div>
+
+          <!-- Canvas for displaying cropped slice (1 cup) -->
+          <canvas id="ramen-canvas" width="400" height="400" class="w-full h-full rounded-2xl object-cover shadow-md transform transition duration-200"></canvas>
+
+          <!-- Interactive Reaction Overlay Layer -->
+          <div id="reaction-overlay" class="absolute inset-0 bg-slate-950/85 rounded-2xl flex flex-col items-center justify-center opacity-0 pointer-events-none transition-opacity duration-200 p-4 text-center">
+            <span id="reaction-icon" class="text-7xl font-black mb-2 transform scale-75 transition">⭕</span>
+            <div id="reaction-text" class="game-font text-2xl font-bold">정답입니다!</div>
+            <div id="reaction-desc" class="text-xs text-slate-300 mt-1"></div>
+          </div>
+        </div>
+
+        <!-- Magnifier hint -->
+        <div class="absolute bottom-3 right-3 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] text-amber-300 border border-white/10 flex items-center space-x-1">
+          <span>🔍</span>
+          <span>건더기 & 면발 확인</span>
+        </div>
+      </div>
+
+      <!-- Question & Name Matching Box -->
+      <div class="w-full bg-slate-800/90 border border-slate-700 rounded-2xl p-3.5 mb-3 text-center flex flex-col items-center">
+        <span class="text-xs text-slate-400 font-semibold mb-0.5">이 컵라면의 이름은?</span>
+        <div class="flex items-center justify-center space-x-1.5 my-1">
+          <span class="text-amber-400 text-lg font-bold">👉</span>
+          <span id="presented-name" class="game-font text-2xl sm:text-3xl text-yellow-300 font-black tracking-wider px-2">
+            오징어짬뽕
+          </span>
+          <span class="text-amber-400 text-lg font-bold">👈</span>
+        </div>
+        <p class="text-[11px] text-slate-300">
+          사진과 이름이 일치하면 <b class="text-sky-400">O</b>, 다르면 <b class="text-red-400">X</b>를 누르세요!
+        </p>
+      </div>
+
+      <!-- O / X Survival Action Buttons -->
+      <div class="grid grid-cols-2 gap-3.5 w-full">
+        <!-- O Button -->
+        <button id="btn-choice-o" class="btn-action-o rounded-2xl py-3.5 flex flex-col items-center justify-center text-white active:scale-95 group">
+          <span class="text-5xl font-black game-font text-sky-100 group-hover:scale-110 transition-transform">⭕</span>
+          <span class="text-base font-black game-font mt-1 tracking-wider">맞아요 (O)</span>
+          <span class="text-[10px] text-sky-200/80">단축키: O / ←</span>
+        </button>
+
+        <!-- X Button -->
+        <button id="btn-choice-x" class="btn-action-x rounded-2xl py-3.5 flex flex-col items-center justify-center text-white active:scale-95 group">
+          <span class="text-5xl font-black game-font text-red-100 group-hover:scale-110 transition-transform">❌</span>
+          <span class="text-base font-black game-font mt-1 tracking-wider">틀려요 (X)</span>
+          <span class="text-[10px] text-red-200/80">단축키: X / →</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Result Screen -->
+    <section id="screen-result" class="w-full hidden flex-col items-center text-center py-2">
+      <div id="result-icon" class="text-7xl mb-1 animate-bounce">🏆</div>
+      <h2 id="result-title" class="game-font text-2xl sm:text-3xl text-white mb-0.5">절대미각 라면신!</h2>
+      <p id="result-subtitle" class="text-xs text-slate-300 mb-3.5">
+        면발과 건더기만 보고 모든 라면을 맞춘 당신은 진정한 컵라면 감별사!
+      </p>
+
+      <!-- Score Summary Board -->
+      <div class="w-full bg-slate-800/90 border border-slate-700 rounded-2xl p-3.5 mb-3 flex items-center justify-around">
+        <div class="text-center">
+          <span class="text-[11px] text-slate-400 block mb-0.5">최종 점수</span>
+          <span id="final-score" class="game-font text-3xl text-amber-400 font-black">100</span>
+          <span class="text-slate-400 text-xs"> / 100</span>
+        </div>
+        <div class="h-8 w-[1px] bg-slate-700"></div>
+        <div class="text-center">
+          <span class="text-[11px] text-slate-400 block mb-0.5">정답률</span>
+          <span id="final-accuracy" class="game-font text-2xl text-sky-400 font-bold">10 / 10</span>
+        </div>
+        <div class="h-8 w-[1px] bg-slate-700"></div>
+        <div class="text-center">
+          <span class="text-[11px] text-slate-400 block mb-0.5">부여 칭호</span>
+          <span id="final-rank" class="game-font text-base text-emerald-400 font-bold">라면 마스터</span>
+        </div>
+      </div>
+
+      <!-- Wrong Answer & Review Notes -->
+      <div class="w-full bg-slate-950/70 border border-slate-800 rounded-2xl p-3 mb-3.5 text-left">
+        <div class="flex items-center justify-between text-xs text-slate-400 mb-2 font-bold px-1">
+          <span>문제별 채점 결과 & 건더기 감별 포인트</span>
+          <span id="review-stats">오답 0개</span>
+        </div>
+        <div id="review-list" class="space-y-2 text-xs max-h-48 overflow-y-auto pr-1">
+          <!-- Dynamically inserted via JS -->
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="w-full grid grid-cols-2 gap-3">
+        <button id="restart-btn" class="py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-black text-base rounded-xl shadow-lg transform active:scale-95 transition game-font">
+          다시 도전하기 🔄
+        </button>
+        <button id="copy-result-btn" class="py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl border border-slate-700 transition flex items-center justify-center space-x-1 active:scale-95">
+          <span>📋 결과 복사하기</span>
+        </button>
+      </div>
+
+      <!-- Toast Popup -->
+      <div id="toast" class="hidden mt-2 px-3 py-1.5 bg-emerald-600/90 text-white text-xs font-semibold rounded-lg shadow-md transition-opacity">
+        결과가 클립보드에 복사되었습니다!
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="w-full text-center text-[10px] text-slate-400/80 mt-3 border-t border-slate-800/60 pt-2">
+      전국 9대 컵라면 실사 감별 OX 퀴즈 • 건더기와 국물 색깔로 맞춰보세요!
+    </footer>
+  </div>
+
+  <script>
+    class SoundController {
+      constructor() {
+        this.ctx = null;
+        this.isMuted = false;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      playCorrect() {
+        if (this.isMuted) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6 (Ding-dong chime)
+        notes.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          const t = now + (idx * 0.08);
+
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, t);
+
+          gain.gain.setValueAtTime(0.25, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start(t);
+          osc.stop(t + 0.35);
+        });
+      }
+
+      playWrong() {
+        if (this.isMuted) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(160, now);
+        osc.frequency.linearRampToValueAtTime(70, now + 0.4);
+
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.005, now + 0.4);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.4);
+      }
+
+      playClick() {
+        if (this.isMuted) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(700, now);
+        osc.frequency.exponentialRampToValueAtTime(350, now + 0.04);
+
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.04);
+      }
+
+      playFanfare() {
+        if (this.isMuted) return;
+        this.init();
+        const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+        const now = this.ctx.currentTime;
+        notes.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          const t = now + (idx * 0.09);
+
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, t);
+
+          gain.gain.setValueAtTime(0.28, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start(t);
+          osc.stop(t + 0.4);
+        });
+      }
+    }
+
+    const sound = new SoundController();
+  </script>
+
+  <script>
+    /**
+     * 9종 컵라면 데이터베이스 (첨부 실사 3x3 격자 순서와 100% 일치)
+     * Row 0: 1번 오징어짬뽕 (0,0) | 2번 신라면블랙 (0,1) | 3번 감자탕면 (0,2)
+     * Row 1: 4번 새우탕면   (1,0) | 5번 너구리     (1,1) | 6번 우육탕면   (1,2)
+     * Row 2: 7번 맛짬뽕     (2,0) | 8번 튀김우동   (2,1) | 9번 육개장     (2,2)
+     */
+    const RAMEN_LIST = [
+      { id: 1, name: "오징어짬뽕", row: 0, col: 0, hint: "하얀 오징어 조각과 양배추, 시원 얼큰한 해물향" },
+      { id: 2, name: "신라면블랙", row: 0, col: 1, hint: "진한 우골 육수와 큼직한 표고버섯 슬라이스 & 청경채" },
+      { id: 3, name: "감자탕면", row: 0, col: 2, hint: "푸짐한 시래기 우거지와 구수하고 걸쭉한 감자탕 국물" },
+      { id: 4, name: "새우탕면", row: 1, col: 0, hint: "동글납작한 주황색 사각 새우볼과 당근 건더기" },
+      { id: 5, name: "너구리", row: 1, col: 1, hint: "커다란 통다시마 1장과 꼬들꼬들한 미역 후레이크" },
+      { id: 6, name: "우육탕면", row: 1, col: 2, hint: "큼직하고 둥근 쇠고기 완자 후레이크와 버섯" },
+      { id: 7, name: "맛짬뽕", row: 2, col: 0, hint: "불맛 해물 야채 건더기와 특유의 3mm 굵은 굴곡면" },
+      { id: 8, name: "튀김우동", row: 2, col: 1, hint: "꽃무늬 소용돌이 어묵(나루토마키)과 짭짤 고소한 튀김 고명" },
+      { id: 9, name: "육개장", row: 2, col: 2, hint: "노란 소용돌이 어묵, 계란 스크램블 고명과 얇은 면발" }
+    ];
+
+    // Master 3x3 Sprite Image Holder
+    const ramenSpriteImg = new Image();
+    let isRealPhotoLoaded = false;
+
+    // Fallback Canvas Generator in case ramen.jpg is temporarily missing before file placement
+    function generateFallbackSprite() {
+      const offCanvas = document.createElement('canvas');
+      offCanvas.width = 900;
+      offCanvas.height = 900;
+      const ctx = offCanvas.getContext('2d');
+      const cellW = 300;
+      const cellH = 300;
+
+      const bgColors = [
+        '#009688', '#e53935', '#f8fafc',
+        '#f472b6', '#facc15', '#5c3a21',
+        '#d4b08c', '#1e293b', '#cbd5e1'
+      ];
+
+      RAMEN_LIST.forEach((ramen, idx) => {
+        const x = ramen.col * cellW;
+        const y = ramen.row * cellH;
+
+        ctx.fillStyle = bgColors[idx];
+        ctx.fillRect(x, y, cellW, cellH);
+
+        const cx = x + cellW / 2;
+        const cy = y + cellH / 2;
+        const cupR = 126;
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, cupR, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = 'rgba(0,0,0,0.35)';
+        ctx.shadowBlur = 10;
+        ctx.shadowOffsetY = 4;
+        ctx.fill();
+        ctx.shadowColor = 'transparent';
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, cupR - 15, 0, Math.PI * 2);
+        ctx.fillStyle = ramen.id === 8 ? '#78350f' : (ramen.id === 2 || ramen.id === 7 ? '#991b1b' : '#c2410c');
+        ctx.fill();
+
+        // Ramen text placeholder
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 22px Jua, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${idx + 1}. ${ramen.name}`, cx, cy);
+      });
+
+      return offCanvas.toDataURL('image/png');
+    }
+  </script>
+  <script>
+    const gameState = {
+      questions: [],
+      currentIndex: 0,
+      score: 0,
+      streak: 0,
+      totalQuestions: 10,
+      isAnsweringLocked: false,
+      history: []
+    };
+
+    // DOM Elements
+    const screenStart = document.getElementById('screen-start');
+    const screenGame = document.getElementById('screen-game');
+    const screenResult = document.getElementById('screen-result');
+
+    const startBtn = document.getElementById('start-btn');
+    const restartBtn = document.getElementById('restart-btn');
+    const copyResultBtn = document.getElementById('copy-result-btn');
+    const toast = document.getElementById('toast');
+
+    const btnChoiceO = document.getElementById('btn-choice-o');
+    const btnChoiceX = document.getElementById('btn-choice-x');
+
+    const ramenCanvas = document.getElementById('ramen-canvas');
+    const canvasCtx = ramenCanvas.getContext('2d');
+    const canvasCard = document.getElementById('canvas-card');
+
+    const presentedNameEl = document.getElementById('presented-name');
+    const qNumberBadge = document.getElementById('q-number-badge');
+    const comboBadge = document.getElementById('combo-badge');
+    const currentScoreEl = document.getElementById('current-score');
+    const progressBarFill = document.getElementById('progress-bar-fill');
+
+    const reactionOverlay = document.getElementById('reaction-overlay');
+    const reactionIcon = document.getElementById('reaction-icon');
+    const reactionText = document.getElementById('reaction-text');
+    const reactionDesc = document.getElementById('reaction-desc');
+
+    const soundBtn = document.getElementById('sound-btn');
+    const soundIcon = document.getElementById('sound-icon');
+    const soundLabel = document.getElementById('sound-label');
+
+    const dropZone = document.getElementById('drop-zone');
+    const realPhotoInput = document.getElementById('real-photo-input');
+    const photoStatusIcon = document.getElementById('photo-status-icon');
+    const photoStatusTitle = document.getElementById('photo-status-title');
+    const photoStatusDesc = document.getElementById('photo-status-desc');
+
+    // Load same folder 'ramen.jpg' directly
+    function initRamenImage() {
+      ramenSpriteImg.onload = () => {
+        isRealPhotoLoaded = true;
+        photoStatusIcon.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-lg shadow-emerald-500/50';
+        photoStatusTitle.textContent = '실사 ramen.jpg 로드 성공!';
+        photoStatusTitle.className = 'text-xs font-bold text-emerald-300';
+        photoStatusDesc.innerHTML = '같은 폴더의 <code class="text-amber-300 font-mono bg-slate-800 px-1 py-0.5 rounded">ramen.jpg</code>를 인식하여 3×3 실사로 분할 완료했습니다.';
+      };
+
+      ramenSpriteImg.onerror = () => {
+        isRealPhotoLoaded = false;
+        photoStatusIcon.className = 'w-2.5 h-2.5 rounded-full bg-amber-400';
+        photoStatusTitle.textContent = 'ramen.jpg 대기 중 (임시 그래픽 적용)';
+        photoStatusTitle.className = 'text-xs font-bold text-amber-300';
+        photoStatusDesc.innerHTML = '같은 폴더에 <code class="text-amber-300 font-mono bg-slate-800 px-1 py-0.5 rounded">ramen.jpg</code>를 넣거나 위 [수동 파일 선택]으로 이미지를 선택해주세요.';
+        // Load fallback graphic
+        ramenSpriteImg.src = generateFallbackSprite();
+      };
+
+      // Reference relative path in same directory
+      ramenSpriteImg.src = 'ramen.jpg';
+    }
+
+    // Initialize image loading immediately
+    initRamenImage();
+
+    // Toggle Sound Button
+    soundBtn.addEventListener('click', () => {
+      sound.isMuted = !sound.isMuted;
+      if (sound.isMuted) {
+        soundIcon.textContent = '🔇';
+        soundLabel.textContent = '소리 OFF';
+      } else {
+        soundIcon.textContent = '🔊';
+        soundLabel.textContent = '소리 ON';
+        sound.playClick();
+      }
+    });
+
+    // Handle Photo File Load (Upload / Drag & Drop override)
+    function handlePhotoFile(file) {
+      if (!file || !file.type.startsWith('image/')) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        ramenSpriteImg.onload = () => {
+          isRealPhotoLoaded = true;
+          photoStatusIcon.className = 'w-2.5 h-2.5 rounded-full bg-sky-400 shadow-lg shadow-sky-500/50';
+          photoStatusTitle.textContent = `실사 사진 분할 완료 (${file.name})`;
+          photoStatusTitle.className = 'text-xs font-bold text-sky-300';
+          photoStatusDesc.textContent = '등록된 실사 3×3 이미지로 완벽히 슬라이스되었습니다.';
+          sound.playFanfare();
+        };
+        ramenSpriteImg.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    realPhotoInput.addEventListener('change', (e) => handlePhotoFile(e.target.files[0]));
+
+    // Drag and Drop support
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        handlePhotoFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    // Generate 10 randomized rounds (50% match, 50% mismatch)
+    function generateQuizRounds() {
+      const list = [];
+      for (let i = 0; i < gameState.totalQuestions; i++) {
+        const ramen = RAMEN_LIST[Math.floor(Math.random() * RAMEN_LIST.length)];
+        const isMatch = Math.random() < 0.5;
+
+        let presentedName = ramen.name;
+        if (!isMatch) {
+          const others = RAMEN_LIST.filter(r => r.id !== ramen.id);
+          const randomOther = others[Math.floor(Math.random() * others.length)];
+          presentedName = randomOther.name;
+        }
+
+        list.push({
+          ramen,
+          presentedName,
+          isMatch
+        });
+      }
+      return list;
+    }
+
+    // Precise 3x3 Slicing on Canvas from ramen.jpg
+    function renderRamenSlice(ramen) {
+      const cw = ramenCanvas.width;
+      const ch = ramenCanvas.height;
+      canvasCtx.clearRect(0, 0, cw, ch);
+
+      const imgW = ramenSpriteImg.naturalWidth || ramenSpriteImg.width || 900;
+      const imgH = ramenSpriteImg.naturalHeight || ramenSpriteImg.height || 900;
+
+      const cellW = imgW / 3;
+      const cellH = imgH / 3;
+
+      const sx = ramen.col * cellW;
+      const sy = ramen.row * cellH;
+
+      canvasCtx.drawImage(
+        ramenSpriteImg,
+        sx, sy, cellW, cellH,
+        0, 0, cw, ch
+      );
+    }
+
+    // Load and Display Question
+    function loadCurrentQuestion() {
+      gameState.isAnsweringLocked = false;
+      const current = gameState.questions[gameState.currentIndex];
+
+      // Update Top HUD
+      qNumberBadge.textContent = `Q ${gameState.currentIndex + 1} / ${gameState.totalQuestions}`;
+      currentScoreEl.textContent = `${gameState.score} / 100`;
+      const pct = (gameState.currentIndex / gameState.totalQuestions) * 100;
+      progressBarFill.style.width = `${pct}%`;
+
+      if (gameState.streak >= 2) {
+        comboBadge.textContent = `🔥 ${gameState.streak}연속 정답!`;
+        comboBadge.classList.remove('hidden');
+      } else {
+        comboBadge.classList.add('hidden');
+      }
+
+      // Display Question text with animation
+      presentedNameEl.textContent = current.presentedName;
+      presentedNameEl.classList.remove('pop-anim');
+      void presentedNameEl.offsetWidth;
+      presentedNameEl.classList.add('pop-anim');
+
+      // Draw 1 Ramen slice from ramen.jpg
+      renderRamenSlice(current.ramen);
+
+      // Reset Reaction overlay
+      reactionOverlay.classList.remove('opacity-100');
+      reactionOverlay.classList.add('opacity-0');
+      canvasCard.classList.remove('border-emerald-500', 'border-red-500');
+      canvasCard.classList.add('border-slate-700');
+      document.getElementById('game-app').classList.remove('shake-anim');
+    }
+
+    // Answer Evaluation
+    function handleChoice(userChoice) {
+      if (gameState.isAnsweringLocked) return;
+      gameState.isAnsweringLocked = true;
+
+      const current = gameState.questions[gameState.currentIndex];
+      const isCorrect = (userChoice === 'O' && current.isMatch) || (userChoice === 'X' && !current.isMatch);
+
+      gameState.history.push({
+        qNum: gameState.currentIndex + 1,
+        ramen: current.ramen,
+        presentedName: current.presentedName,
+        isMatch: current.isMatch,
+        userChoice,
+        isCorrect
+      });
+
+      if (isCorrect) {
+        gameState.score += 10;
+        gameState.streak += 1;
+        triggerSuccessReaction(current);
+      } else {
+        gameState.streak = 0;
+        triggerFailureReaction(current);
+      }
+
+      currentScoreEl.textContent = `${gameState.score} / 100`;
+
+      setTimeout(() => {
+        gameState.currentIndex++;
+        if (gameState.currentIndex < gameState.totalQuestions) {
+          loadCurrentQuestion();
+        } else {
+          showFinalResults();
+        }
+      }, 1350);
+    }
+
+    function triggerSuccessReaction(current) {
+      sound.playCorrect();
+
+      // Confetti burst
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 55,
+          spread: 65,
+          origin: { y: 0.65 }
+        });
+      }
+
+      // Border and Overlay
+      canvasCard.classList.remove('border-slate-700');
+      canvasCard.classList.add('border-emerald-500');
+
+      reactionIcon.textContent = '⭕';
+      reactionIcon.className = 'text-7xl font-black mb-1 text-sky-400';
+      reactionText.innerHTML = '<span class="text-sky-300">정답입니다!</span>';
+      reactionDesc.innerHTML = `실제 라면: <span class="font-bold text-amber-300">${current.ramen.name}</span>`;
+
+      reactionOverlay.classList.remove('opacity-0');
+      reactionOverlay.classList.add('opacity-100');
+    }
+
+    function triggerFailureReaction(current) {
+      sound.playWrong();
+
+      // Screen Shake
+      const gameApp = document.getElementById('game-app');
+      gameApp.classList.add('shake-anim');
+
+      canvasCard.classList.remove('border-slate-700');
+      canvasCard.classList.add('border-red-500');
+
+      reactionIcon.textContent = '❌';
+      reactionIcon.className = 'text-7xl font-black mb-1 text-red-500';
+      reactionText.innerHTML = '<span class="text-red-400">오답입니다!</span>';
+      reactionDesc.innerHTML = `정답은 <span class="font-bold text-amber-300 underline">[${current.ramen.name}]</span> 입니다!`;
+
+      reactionOverlay.classList.remove('opacity-0');
+      reactionOverlay.classList.add('opacity-100');
+    }
+
+    function showFinalResults() {
+      sound.playFanfare();
+
+      screenGame.classList.add('hidden');
+      screenGame.classList.remove('flex');
+      screenResult.classList.remove('hidden');
+      screenResult.classList.add('flex');
+
+      // Final Score & Accuracy
+      document.getElementById('final-score').textContent = gameState.score;
+      const correctCount = gameState.score / 10;
+      document.getElementById('final-accuracy').textContent = `${correctCount} / ${gameState.totalQuestions}`;
+
+      const titleEl = document.getElementById('result-title');
+      const subtitleEl = document.getElementById('result-subtitle');
+      const iconEl = document.getElementById('result-icon');
+      const rankEl = document.getElementById('final-rank');
+
+      if (gameState.score === 100) {
+        iconEl.textContent = '👑';
+        titleEl.textContent = '신(神)의 혓바닥! 라면신 등극';
+        subtitleEl.textContent = '면발의 굵기와 건더기 모양 하나로 모든 라면을 꿰뚫어 보는 절대미각자!';
+        rankEl.textContent = '절대미각 라면신';
+        rankEl.className = 'game-font text-base text-amber-400 font-bold';
+        if (typeof confetti === 'function') {
+          confetti({ particleCount: 160, spread: 100, origin: { y: 0.5 } });
+        }
+      } else if (gameState.score >= 80) {
+        iconEl.textContent = '🍜';
+        titleEl.textContent = '편의점 수석 컵라면 감별사!';
+        subtitleEl.textContent = '대부분의 컵라면을 척척 맞추는 상당한 내공의 미식가이십니다.';
+        rankEl.textContent = '수석 감별사';
+        rankEl.className = 'game-font text-base text-sky-400 font-bold';
+      } else if (gameState.score >= 50) {
+        iconEl.textContent = '🥢';
+        titleEl.textContent = '준수한 컵라면 애호가!';
+        subtitleEl.textContent = '튀김우동과 육개장, 너구리의 건더기 특징을 조금 더 눈여겨보세요!';
+        rankEl.textContent = '라면 탐험가';
+        rankEl.className = 'game-font text-base text-yellow-400 font-bold';
+      } else {
+        iconEl.textContent = '🍲';
+        titleEl.textContent = '배고픈 컵라면 초보!';
+        subtitleEl.textContent = '국물만 마시고 건더기는 못 보셨나요? 오늘 밤 편의점에서 복습해봅시다!';
+        rankEl.textContent = '라면 꿈나무';
+        rankEl.className = 'game-font text-base text-red-400 font-bold';
+      }
+
+      // Review notes
+      const reviewList = document.getElementById('review-list');
+      const reviewStats = document.getElementById('review-stats');
+      const wrongCount = gameState.totalQuestions - correctCount;
+      reviewStats.textContent = `오답 ${wrongCount}개 / 정답 ${correctCount}개`;
+
+      reviewList.innerHTML = '';
+      gameState.history.forEach(item => {
+        const row = document.createElement('div');
+        row.className = `p-2.5 rounded-xl border flex items-center justify-between ${
+          item.isCorrect
+            ? 'bg-emerald-950/40 border-emerald-800/60 text-emerald-200'
+            : 'bg-red-950/40 border-red-800/60 text-red-200'
+        }`;
+
+        row.innerHTML = `
+          <div class="flex items-center space-x-2">
+            <span class="font-bold text-sm">${item.isCorrect ? '⭕' : '❌'}</span>
+            <div>
+              <div class="font-semibold text-xs text-white">
+                Q${item.qNum}. 실제: <span class="text-amber-300 underline font-bold">${item.ramen.name}</span>
+              </div>
+              <div class="text-[11px] text-slate-400">
+                제시: "${item.presentedName}" (선택: <b>${item.userChoice}</b>)
+              </div>
+            </div>
+          </div>
+          <div class="text-right text-[10px] text-slate-400 max-w-[120px] truncate">
+            ${item.ramen.hint}
+          </div>
+        `;
+        reviewList.appendChild(row);
+      });
+    }
+
+    function startQuiz() {
+      sound.playClick();
+      gameState.score = 0;
+      gameState.streak = 0;
+      gameState.currentIndex = 0;
+      gameState.history = [];
+      gameState.questions = generateQuizRounds();
+
+      screenStart.classList.add('hidden');
+      screenStart.classList.remove('flex');
+      screenResult.classList.add('hidden');
+      screenResult.classList.remove('flex');
+
+      screenGame.classList.remove('hidden');
+      screenGame.classList.add('flex');
+
+      loadCurrentQuestion();
+    }
+
+    function copyShareResult() {
+      const correctCount = gameState.score / 10;
+      const rank = document.getElementById('final-rank').textContent;
+      const text = `[전국 컵라면 서바이벌 OX 퀴즈 결과]\n` +
+                   `🍜 점수: ${gameState.score}점 (100점 만점)\n` +
+                   `🎯 정답률: ${correctCount}/${gameState.totalQuestions}\n` +
+                   `🏆 칭호: [${rank}]\n` +
+                   `너도 건더기랑 면발만 보고 컵라면 이름 맞출 수 있어? 지금 도전해봐!`;
+
+      const dummy = document.createElement("textarea");
+      document.body.appendChild(dummy);
+      dummy.value = text;
+      dummy.select();
+      document.execCommand("copy");
+      document.body.removeChild(dummy);
+
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 2500);
+      sound.playClick();
+    }
+
+    function triggerEasterEgg() {
+      sound.playFanfare();
+      if (typeof confetti === 'function') {
+        confetti({ particleCount: 40, spread: 50 });
+      }
+    }
+
+    // Event Bindings
+    startBtn.addEventListener('click', startQuiz);
+    restartBtn.addEventListener('click', startQuiz);
+    copyResultBtn.addEventListener('click', copyShareResult);
+
+    btnChoiceO.addEventListener('click', () => handleChoice('O'));
+    btnChoiceX.addEventListener('click', () => handleChoice('X'));
+
+    // Keyboard controls (O / X and ArrowLeft / ArrowRight)
+    window.addEventListener('keydown', (e) => {
+      if (screenGame.classList.contains('hidden') || gameState.isAnsweringLocked) return;
+      if (e.key.toLowerCase() === 'o' || e.key === 'ArrowLeft') {
+        handleChoice('O');
+      } else if (e.key.toLowerCase() === 'x' || e.key === 'ArrowRight') {
+        handleChoice('X');
+      }
+    });
+  </script>
+</body>
+</html>

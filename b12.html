@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BRAUN 면도기 공식 케어 센터</title>
+  <style>
+    :root {
+      --card-bg: rgba(20, 22, 27, 0.92);
+      --header-bg: rgba(14, 16, 20, 0.96);
+      --accent-yellow: #f5b300;
+      --accent-yellow-hover: #e0a300;
+      --neon-cyan: #00e5ff;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --bubble-bot: rgba(33, 37, 44, 0.92);
+      --bubble-user: #f5b300;
+      --bubble-user-text: #111317;
+      --border-color: rgba(255, 255, 255, 0.12);
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-family);
+    }
+
+    /* 동일 폴더의 braun.jpg 배경화면 적용 */
+    body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background-color: #0c0e11;
+      background-image: 
+        radial-gradient(circle at 75% 35%, rgba(0, 0, 0, 0.15) 0%, rgba(10, 12, 15, 0.75) 75%),
+        linear-gradient(to right, rgba(8, 10, 13, 0.88) 0%, rgba(8, 10, 13, 0.25) 45%, rgba(8, 10, 13, 0.75) 100%),
+        url('braun.jpg');
+      background-size: cover;
+      background-position: center center;
+      background-repeat: no-repeat;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      color: var(--text-main);
+      position: relative;
+    }
+
+    /* 상단 내비게이션 */
+    header.brand-nav {
+      padding: 24px 44px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      background: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, transparent 100%);
+    }
+
+    .brand-logo {
+      font-size: 1.6rem;
+      font-weight: 900;
+      letter-spacing: 4px;
+      color: #fff;
+    }
+    .brand-logo span {
+      color: var(--accent-yellow);
+    }
+
+    /* 메인 히어로 텍스트 컨텐츠 */
+    .hero-content {
+      padding: 0 44px 70px 44px;
+      max-width: 620px;
+      z-index: 10;
+      pointer-events: none; /* 캐릭터 클릭을 방해하지 않음 */
+    }
+
+    .hero-tag {
+      display: inline-block;
+      color: var(--accent-yellow);
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+    }
+
+    .hero-content h1 {
+      font-size: 2.8rem;
+      font-weight: 800;
+      line-height: 1.25;
+      margin-bottom: 16px;
+      text-shadow: 0 4px 18px rgba(0, 0, 0, 0.85);
+    }
+
+    .hero-content p {
+      font-size: 1.05rem;
+      color: #d1d5db;
+      line-height: 1.65;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85);
+    }
+
+    /* ========================================================
+       화면 프레임 안을 부유하며 돌아다니는 AI (EVE) 캐릭터
+    ======================================================== */
+    .eve-wanderer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 82px;
+      height: 102px;
+      z-index: 9990;
+      cursor: pointer;
+      user-select: none;
+      pointer-events: auto;
+      transform: translate3d(120px, 160px, 0);
+      will-change: transform;
+      transition: filter 0.2s ease;
+    }
+
+    .eve-wanderer:hover {
+      filter: drop-shadow(0 0 16px rgba(0, 229, 255, 0.85));
+    }
+
+    /* 자체 부유 진동 효과 */
+    .eve-body-container {
+      width: 100%;
+      height: 100%;
+      animation: subtleHover 2.4s ease-in-out infinite alternate;
+    }
+
+    @keyframes subtleHover {
+      0% { transform: translateY(0px) scale(1); }
+      100% { transform: translateY(-8px) scale(1.02); }
+    }
+
+    /* 팔 흔들림 모션 */
+    .eve-arm-left {
+      transform-origin: top right;
+      animation: armFlapLeft 3.2s ease-in-out infinite alternate;
+    }
+    .eve-arm-right {
+      transform-origin: top left;
+      animation: armFlapRight 3.2s ease-in-out infinite alternate;
+    }
+    @keyframes armFlapLeft {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(-10deg); }
+    }
+    @keyframes armFlapRight {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(10deg); }
+    }
+
+    /* 눈 깜빡임 애니메이션 */
+    .eve-eyes {
+      animation: eveBlink 4.2s infinite;
+      transform-origin: center;
+    }
+
+    @keyframes eveBlink {
+      0%, 46%, 54%, 100% {
+        transform: scaleY(1);
+        filter: drop-shadow(0 0 6px var(--neon-cyan));
+      }
+      50% {
+        transform: scaleY(0.08);
+        filter: none;
+      }
+    }
+
+    /* 머리 위 말풍선 툴팁 */
+    .eve-tooltip {
+      position: absolute;
+      top: -38px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(14, 16, 20, 0.94);
+      border: 1px solid var(--accent-yellow);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      pointer-events: none;
+    }
+
+    /* ========================================================
+       채팅창 UI (우측 하단 - 침범 금지 영역)
+    ======================================================== */
+    .chat-window {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 410px;
+      max-width: calc(100vw - 32px);
+      height: 620px;
+      max-height: calc(100vh - 48px);
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: 22px;
+      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.75);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transform: scale(0.9) translateY(30px);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 9999;
+    }
+
+    .chat-window.active {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .chat-header {
+      background: var(--header-bg);
+      border-bottom: 1px solid var(--border-color);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-avatar {
+      width: 36px;
+      height: 36px;
+    }
+
+    .header-text h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      background: #00e676;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #00e676;
+    }
+
+    .close-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      padding: 6px;
+      border-radius: 8px;
+      transition: color 0.2s, background 0.2s;
+    }
+    .close-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* 대화 내용 스크롤 영역 */
+    .chat-messages {
+      flex: 1;
+      padding: 18px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      scroll-behavior: smooth;
+    }
+
+    .chat-messages::-webkit-scrollbar {
+      width: 5px;
+    }
+    .chat-messages::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: 4px;
+    }
+
+    .message {
+      max-width: 84%;
+      font-size: 0.88rem;
+      line-height: 1.55;
+      padding: 12px 16px;
+      word-break: keep-all;
+    }
+
+    .bot-message {
+      align-self: flex-start;
+      background: var(--bubble-bot);
+      color: var(--text-main);
+      border-radius: 4px 18px 18px 18px;
+      border: 1px solid var(--border-color);
+    }
+
+    .user-message {
+      align-self: flex-end;
+      background: var(--bubble-user);
+      color: var(--bubble-user-text);
+      font-weight: 600;
+      border-radius: 18px 4px 18px 18px;
+    }
+
+    .quick-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .chip-btn {
+      background: rgba(20, 22, 26, 0.85);
+      border: 1px solid rgba(245, 179, 0, 0.35);
+      color: #e5e7eb;
+      font-size: 0.77rem;
+      padding: 6px 11px;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .chip-btn:hover {
+      background: var(--accent-yellow);
+      color: #111;
+      font-weight: 700;
+    }
+
+    .typing-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 10px 14px;
+      background: var(--bubble-bot);
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+      width: fit-content;
+    }
+
+    .typing-indicator span {
+      width: 6px;
+      height: 6px;
+      background: var(--accent-yellow);
+      border-radius: 50%;
+      animation: typingDot 1.2s infinite ease-in-out;
+    }
+    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typingDot {
+      0%, 80%, 100% { transform: translateY(0); opacity: 0.35; }
+      40% { transform: translateY(-5px); opacity: 1; }
+    }
+
+    .chat-input-area {
+      background: var(--header-bg);
+      border-top: 1px solid var(--border-color);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .chat-input {
+      flex: 1;
+      background: rgba(25, 27, 32, 0.95);
+      border: 1px solid var(--border-color);
+      color: #fff;
+      font-size: 0.9rem;
+      padding: 11px 15px;
+      border-radius: 12px;
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    .chat-input:focus {
+      border-color: var(--accent-yellow);
+    }
+
+    .send-btn {
+      background: var(--accent-yellow);
+      border: none;
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .send-btn:hover { background: var(--accent-yellow-hover); }
+    .send-btn:active { transform: scale(0.95); }
+    .send-btn svg { width: 20px; height: 20px; fill: #111; }
+  </style>
+</head>
+<body>
+
+  <header class="brand-nav">
+    <div class="brand-logo">BRAUN <span>CARE</span></div>
+  </header>
+
+  <main class="hero-content">
+    <span class="hero-tag">Official Diagnostics</span>
+    <h1>브라운 스마트케어 &<br>시리즈 문제 해결 센터</h1>
+    <p>화면 안을 유영하고 있는 AI EVE 캐릭터를 클릭하시면, 기능 이상·배터리 충전·세척 냄새·소음 등 면도기 고장 원인을 신속하게 진단받으실 수 있습니다.</p>
+  </main>
+
+  <!-- ========================================================
+       화면 프레임 안을 부유하며 돌아다니는 AI (EVE) 캐릭터
+  ======================================================== -->
+  <div class="eve-wanderer" id="eveWanderer" title="클릭하여 AI 상담 시작">
+    <div class="eve-tooltip">EVE 상담원 클릭 💬</div>
+    <div class="eve-body-container">
+      <svg viewBox="0 0 100 120" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="eveGloss" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ffffff"/>
+            <stop offset="65%" stop-color="#edf2f7"/>
+            <stop offset="100%" stop-color="#a0aec0"/>
+          </linearGradient>
+          <linearGradient id="eveVisor" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#141923"/>
+            <stop offset="100%" stop-color="#05070a"/>
+          </linearGradient>
+        </defs>
+
+        <!-- 양팔 (유영 애니메이션) -->
+        <g class="eve-arm-left">
+          <ellipse cx="15" cy="65" rx="6" ry="18" fill="url(#eveGloss)" transform="rotate(16 15 65)" />
+        </g>
+        <g class="eve-arm-right">
+          <ellipse cx="85" cy="65" rx="6" ry="18" fill="url(#eveGloss)" transform="rotate(-16 85 65)" />
+        </g>
+
+        <!-- 몸체(하부 쉘) -->
+        <path d="M 28,48 C 24,70 38,105 50,105 C 62,105 76,70 72,48 C 65,51 35,51 28,48 Z" fill="url(#eveGloss)" />
+
+        <!-- 헤드(헬멧) -->
+        <ellipse cx="50" cy="27" rx="27" ry="21" fill="url(#eveGloss)" />
+
+        <!-- 페이스 바이저 스크린 -->
+        <ellipse cx="50" cy="28" rx="20" ry="13" fill="url(#eveVisor)" />
+
+        <!-- 블루 네온 눈 (깜빡임 애니메이션) -->
+        <g class="eve-eyes">
+          <ellipse cx="42" cy="28" rx="5" ry="3.5" fill="#00e5ff" />
+          <ellipse cx="58" cy="28" rx="5" ry="3.5" fill="#00e5ff" />
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       우측 하단 챗봇 윈도우 (EVE 침범 금지 영역)
+  ======================================================== -->
+  <div class="chat-window" id="chatWindow">
+    <div class="chat-header">
+      <div class="header-info">
+        <div class="header-avatar">
+          <svg viewBox="0 0 100 120" width="100%" height="100%">
+            <ellipse cx="50" cy="27" rx="25" ry="19" fill="#ffffff" />
+            <ellipse cx="50" cy="28" rx="19" ry="12" fill="#111827" />
+            <ellipse cx="42" cy="28" rx="4.5" ry="3" fill="#00e5ff" />
+            <ellipse cx="58" cy="28" rx="4.5" ry="3" fill="#00e5ff" />
+            <path d="M 30,48 C 26,68 38,98 50,98 C 62,98 74,68 70,48 Z" fill="#ffffff" />
+          </svg>
+        </div>
+        <div class="header-text">
+          <h3>BRAUN AI Support</h3>
+          <span class="status-badge"><span class="status-dot"></span>EVE 진단 준비 완료</span>
+        </div>
+      </div>
+      <button class="close-btn" id="closeChat" aria-label="닫기">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+      <div class="message bot-message">
+        안녕하세요! 브라운 공식 문제해결 어시스턴트 <strong>EVE</strong>입니다.<br><br>
+        겪고 계신 기기 문제를 선택하시거나 질문을 자유롭게 입력해 주세요:
+        <div class="quick-chips">
+          <button class="chip-btn" onclick="sendQuickKeyword('기능 문제')">⚙️ 작동/전원 불가</button>
+          <button class="chip-btn" onclick="sendQuickKeyword('배터리 충전')">🔋 충전/배터리 불량</button>
+          <button class="chip-btn" onclick="sendQuickKeyword('세척 및 냄새')">🧼 스마트케어/냄새</button>
+          <button class="chip-btn" onclick="sendQuickKeyword('소음 및 진동')">🔊 이상 소음/마찰음</button>
+          <button class="chip-btn" onclick="sendQuickKeyword('날망 손상')">⚠️ 날망 파손/교체</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-input-area">
+      <input type="text" id="userInput" class="chat-input" placeholder="증상을 입력하세요 (예: 전원이 안 켜짐, 락 해제)" />
+      <button id="sendBtn" class="send-btn" aria-label="전송">
+        <svg viewBox="0 0 24 24">
+          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    /* ========================================================
+       1. 브라운 트러블슈팅 지식베이스 (공식 카테고리)
+    ======================================================== */
+    const BRAUN_KNOWLEDGE_BASE = [
+      {
+        tags: ["기능", "작동", "안켜짐", "절삭력", "작동안함", "멈춤", "락", "잠금"],
+        answer: "<strong>[기능 및 작동 점검 안내]</strong><br>" +
+                "1. <strong>여행용 락(Travel Lock):</strong> 전원 스위치가 잠겨 있을 수 있습니다. 전원 버튼을 약 3~5초간 길게 눌러 락을 해제하세요.<br>" +
+                "2. <strong>스마트케어 건조 상태:</strong> 자동 세척 직후 건조 단계에서는 일시적으로 작동이 정지될 수 있습니다.<br>" +
+                "3. <strong>절삭력 저하:</strong> 망과 날에 잔여물이 끼었거나 권장 교체 주기(약 18개월)가 지났는지 확인해 주세요."
+      },
+      {
+        tags: ["배터리", "충전", "방전", "불", "점멸", "라이트", "꺼짐", "전원"],
+        answer: "<strong>[배터리 & 충전 점검 안내]</strong><br>" +
+                "1. <strong>완전 방전 상태:</strong> 장시간 미사용 시 충전기를 연결해도 첫 10~15분간은 LED 디스플레이가 켜지지 않을 수 있습니다. 최소 30분 이상 유선 연결해 두세요.<br>" +
+                "2. <strong>충전 단자 접촉 확인:</strong> 본체 하단 및 스테이션 내부의 금속 충전 단자에 물기나 이물질이 없도록 마른 천으로 닦아주세요.<br>" +
+                "3. <strong>적정 충전 온도:</strong> 최적 충전 온도는 15°C~35°C입니다."
+      },
+      {
+        tags: ["냄새", "세척", "악취", "세척액", "카트리지", "위생"],
+        answer: "<strong>[세척 및 위생 점검 안내]</strong><br>" +
+                "1. <strong>세척액 카트리지 정기 교체:</strong> 매일 사용 기준 약 2~3개월 주기로 세척 카트리지를 교체해야 상쾌한 알코올 소독 효과가 유지됩니다.<br>" +
+                "2. <strong>주 1회 온수 세척:</strong> 날망을 분리하여 흐르는 온수와 물비누로 내부 수염 잔여물을 깨끗이 세척 후 완전히 말려주세요."
+      },
+      {
+        tags: ["소음", "소리", "진동", "이상한", "갈리는", "삐"],
+        answer: "<strong>[소음 및 진동 점검 안내]</strong><br>" +
+                "1. <strong>날망 윤활(오일링):</strong> 물세척 후 마찰로 인해 뻑뻑한 고주파 소음이 날 수 있습니다. 날망에 전용 오일 또는 가벼운 기계유 1방울을 도포해 주세요.<br>" +
+                "2. <strong>카세트 결합 상태:</strong> 날망 카세트가 '딸깍' 소리와 함께 완전히 체결되었는지 확인하세요."
+      },
+      {
+        tags: ["손상", "파손", "날망", "구멍", "망", "상처", "찢어"],
+        answer: "<strong>[날망 손상 및 정품 교체 안내]</strong><br>" +
+                "1. <strong>즉시 사용 중단:</strong> 날망에 미세한 구멍이나 흠집이 생기면 피부 상처를 유발하므로 바로 사용을 중단해야 합니다.<br>" +
+                "2. <strong>정품 카세트 구매:</strong> 본체 뒷면의 4자리 Type 번호(예: 5764, 5762 등)를 확인한 뒤 호환 정품 날망을 구매해 장착해 주세요."
+      }
+    ];
+
+    /* ========================================================
+       2. EVE 캐릭터 화면 프레임 유영 & 채팅창 침범 방지 물리 엔진
+    ======================================================== */
+    const eve = document.getElementById('eveWanderer');
+    const chatWindow = document.getElementById('chatWindow');
+    const chatMessages = document.getElementById('chatMessages');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const closeChat = document.getElementById('closeChat');
+
+    // 캐릭터 위치 및 속도 벡터
+    let posX = 120;
+    let posY = 160;
+    let velX = 1.2;
+    let velY = 0.8;
+    let currentTilt = 0;
+
+    const EVE_WIDTH = 82;
+    const EVE_HEIGHT = 102;
+    const EDGE_PADDING = 20; // 화면 가장자리 최소 여백
+
+    function wanderAnimationStep() {
+      const winW = window.innerWidth;
+      const winH = window.innerHeight;
+
+      // 1. 화면 외곽 프레임 경계 검사 및 튕김
+      if (posX <= EDGE_PADDING) {
+        posX = EDGE_PADDING;
+        velX = Math.abs(velX) + (Math.random() * 0.3);
+      } else if (posX + EVE_WIDTH >= winW - EDGE_PADDING) {
+        posX = winW - EDGE_PADDING - EVE_WIDTH;
+        velX = -Math.abs(velX) - (Math.random() * 0.3);
+      }
+
+      if (posY <= EDGE_PADDING) {
+        posY = EDGE_PADDING;
+        velY = Math.abs(velY) + (Math.random() * 0.3);
+      } else if (posY + EVE_HEIGHT >= winH - EDGE_PADDING) {
+        posY = winH - EDGE_PADDING - EVE_HEIGHT;
+        velY = -Math.abs(velY) - (Math.random() * 0.3);
+      }
+
+      // 2. 채팅창 열림 상태일 때 침범 방지 (Safety Buffer 30px 적용)
+      if (chatWindow.classList.contains('active')) {
+        const chatRect = chatWindow.getBoundingClientRect();
+        const buffer = 30;
+        const safeLeft = chatRect.left - buffer;
+        const safeTop = chatRect.top - buffer;
+        const safeRight = chatRect.right + buffer;
+        const safeBottom = chatRect.bottom + buffer;
+
+        const eveRight = posX + EVE_WIDTH;
+        const eveBottom = posY + EVE_HEIGHT;
+
+        // 채팅창 영역 겹침 감지 시 즉시 회피 기동
+        const isColliding = (eveRight > safeLeft && posX < safeRight && eveBottom > safeTop && posY < safeBottom);
+
+        if (isColliding) {
+          velX = -Math.abs(velX) - 0.8;
+          velY = -Math.abs(velY) - 0.8;
+          posX += velX * 2.5;
+          posY += velY * 2.5;
+        }
+      }
+
+      // 3. 부드러운 유기적 유영 (Wandering Turbulence)
+      if (Math.random() < 0.025) {
+        velX += (Math.random() - 0.5) * 0.5;
+        velY += (Math.random() - 0.5) * 0.5;
+        // 속도 상한/하한 제약
+        velX = Math.max(-1.8, Math.min(1.8, velX));
+        velY = Math.max(-1.4, Math.min(1.4, velY));
+      }
+
+      posX += velX;
+      posY += velY;
+
+      // 비행 방향에 맞춘 몸체 기울기(Tilt) 보간
+      const targetTilt = velX * 7.5;
+      currentTilt += (targetTilt - currentTilt) * 0.1;
+
+      // 화면에 좌표 반영
+      eve.style.transform = `translate3d(${posX.toFixed(1)}px, ${posY.toFixed(1)}px, 0) rotate(${currentTilt.toFixed(1)}deg)`;
+
+      requestAnimationFrame(wanderAnimationStep);
+    }
+
+    // 부유 비행 루프 개시
+    requestAnimationFrame(wanderAnimationStep);
+
+    /* ========================================================
+       3. 챗봇 상담 상호작용
+    ======================================================== */
+    eve.addEventListener('click', () => {
+      chatWindow.classList.add('active');
+      userInput.focus();
+    });
+
+    closeChat.addEventListener('click', () => {
+      chatWindow.classList.remove('active');
+    });
+
+    function sendQuickKeyword(keyword) {
+      userInput.value = keyword;
+      handleSendMessage();
+    }
+
+    function appendMessage(sender, text) {
+      const msgDiv = document.createElement('div');
+      msgDiv.classList.add('message', sender === 'user' ? 'user-message' : 'bot-message');
+      msgDiv.innerHTML = text;
+      chatMessages.appendChild(msgDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function showTypingIndicator() {
+      const indicator = document.createElement('div');
+      indicator.classList.add('typing-indicator');
+      indicator.id = 'typingIndicator';
+      indicator.innerHTML = '<span></span><span></span><span></span>';
+      chatMessages.appendChild(indicator);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function removeTypingIndicator() {
+      const indicator = document.getElementById('typingIndicator');
+      if (indicator) indicator.remove();
+    }
+
+    async function fetchBraunTroubleshootingResponse(query) {
+      await new Promise(res => setTimeout(res, 800));
+
+      const cleanQuery = query.toLowerCase();
+      const match = BRAUN_KNOWLEDGE_BASE.find(item => 
+        item.tags.some(tag => cleanQuery.includes(tag.toLowerCase()))
+      );
+
+      if (match) return match.answer;
+
+      return "문의하신 증상에 대해 브라운 문제해결 가이드를 확인했습니다.<br><br>" +
+             "• 기기 작동 불량 시: 전원 버튼을 3초간 길게 눌러 <strong>여행용 락</strong>을 해제해 보세요.<br>" +
+             "• 절삭력 또는 소음 시: 날망 분리 세척 및 전용 오일 도포를 권장합니다.<br><br>" +
+             "추가적인 점검이나 부품 안내가 필요하시면 브라운 고객지원센터(1577-8027)를 통해 상담받으실 수 있습니다.";
+    }
+
+    async function handleSendMessage() {
+      const text = userInput.value.trim();
+      if (!text) return;
+
+      appendMessage('user', text);
+      userInput.value = '';
+
+      showTypingIndicator();
+
+      try {
+        const botReply = await fetchBraunTroubleshootingResponse(text);
+        removeTypingIndicator();
+        appendMessage('bot', botReply);
+      } catch (err) {
+        removeTypingIndicator();
+        appendMessage('bot', '진단 중 일시적인 오류가 발생했습니다.');
+      }
+    }
+
+    sendBtn.addEventListener('click', handleSendMessage);
+    userInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') handleSendMessage();
+    });
+  </script>
+</body>
+</html>

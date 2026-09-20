@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Realistic Soft-UI Calculator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at 50% 30%, #f0f2f5, #d9dee4);
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* 액정 디지털 디스플레이 폰트 */
+    .lcd-font {
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: -0.04em;
+    }
+
+    /* 본체 3D 소프트 섀도우 (이미지와 동일한 자연스러운 볼륨감) */
+    .calc-body {
+      background: #f4f5f7;
+      box-shadow: 
+        0 24px 45px -8px rgba(0, 0, 0, 0.22),
+        0 10px 18px -4px rgba(0, 0, 0, 0.12),
+        inset 0 1px 1px 0 rgba(255, 255, 255, 0.9),
+        inset 0 -2px 5px 0 rgba(0, 0, 0, 0.06);
+    }
+
+    /* 상단 검은색 LCD 디스플레이 패널 섀도우 */
+    .lcd-screen {
+      background: #363638;
+      box-shadow: 
+        inset 0 3px 6px rgba(0, 0, 0, 0.65),
+        inset 0 1px 2px rgba(0, 0, 0, 0.8),
+        0 1px 1px rgba(255, 255, 255, 0.8);
+    }
+
+    /* 일반 화이트/그레이 버튼 (뉴모피즘/소프트 볼륨 스타일) */
+    .btn-calc {
+      transition: all 0.08s cubic-bezier(0.2, 0, 0, 1);
+      background: #f6f7f9;
+      color: #3b3d44;
+      box-shadow: 
+        0 3px 5px -1px rgba(0, 0, 0, 0.12),
+        0 2px 3px 0 rgba(0, 0, 0, 0.08),
+        inset 0 1px 1.5px rgba(255, 255, 255, 0.95),
+        inset 0 -1px 1.5px rgba(0, 0, 0, 0.05);
+    }
+    .btn-calc:hover {
+      background: #ffffff;
+      filter: brightness(1.02);
+    }
+    .btn-calc:active, .btn-calc.pressed {
+      transform: translateY(1.5px) scale(0.975);
+      background: #ebeef2;
+      box-shadow: 
+        0 1px 2px 0 rgba(0, 0, 0, 0.1),
+        inset 0 1.5px 3px rgba(0, 0, 0, 0.12);
+    }
+
+    /* 오렌지 포인트 버튼 */
+    .btn-orange {
+      transition: all 0.08s cubic-bezier(0.2, 0, 0, 1);
+      background: linear-gradient(180deg, #ff9500 0%, #f38600 100%);
+      color: #ffffff;
+      box-shadow: 
+        0 4px 8px -1px rgba(243, 134, 0, 0.4),
+        0 2px 4px 0 rgba(0, 0, 0, 0.08),
+        inset 0 1px 1.5px rgba(255, 255, 255, 0.45),
+        inset 0 -2px 3px rgba(180, 85, 0, 0.25);
+    }
+    .btn-orange:hover {
+      filter: brightness(1.05);
+    }
+    .btn-orange:active, .btn-orange.pressed {
+      transform: translateY(1.5px) scale(0.975);
+      background: linear-gradient(180deg, #e68000 0%, #d87300 100%);
+      box-shadow: 
+        0 1px 3px 0 rgba(243, 134, 0, 0.35),
+        inset 0 1.5px 3px rgba(0, 0, 0, 0.25);
+    }
+
+    /* 스크롤바 미세 숨김 */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+  <div class="relative w-full max-w-[360px] sm:max-w-[380px]">
+    
+    <!-- 계산기 본체 카드 -->
+    <div class="calc-body rounded-[38px] p-6 pb-7 border border-white/60">
+      
+      <!-- 상단 액정 화면 (디스플레이) -->
+      <div class="lcd-screen rounded-[16px] px-5 py-4 mb-6 flex flex-col justify-between min-h-[108px] overflow-hidden text-right border border-black/20">
+        <!-- 보조 상태 표시줄 (메모리, 진행 중인 수식 표시) -->
+        <div class="flex items-center justify-between text-xs text-neutral-400 font-mono tracking-wider h-4">
+          <div class="flex items-center space-x-2">
+            <span id="mem-indicator" class="opacity-0 font-bold text-amber-400 transition-opacity text-[11px] bg-amber-400/20 px-1.5 py-0.5 rounded">M</span>
+            <span id="op-indicator" class="text-orange-400 font-semibold text-[11px]"></span>
+          </div>
+          <div id="sub-display" class="truncate max-w-[190px] text-neutral-400 text-xs"></div>
+        </div>
+
+        <!-- 메인 결과 숫자 창 -->
+        <div class="overflow-x-auto no-scrollbar flex items-baseline justify-end w-full">
+          <span id="main-display" class="lcd-font text-white text-[42px] font-medium leading-none tracking-tight">0</span>
+        </div>
+      </div>
+
+      <!-- 버튼 5 x 5 격자 레이아웃 -->
+      <div class="grid grid-cols-5 gap-3">
+        
+        <!-- Row 1: M+, M-, MR, MC, +/- -->
+        <button data-action="m-plus" class="btn-calc h-14 rounded-2xl font-medium text-sm flex items-center justify-center">M+</button>
+        <button data-action="m-minus" class="btn-calc h-14 rounded-2xl font-medium text-sm flex items-center justify-center">M-</button>
+        <button data-action="mr" class="btn-calc h-14 rounded-2xl font-medium text-sm flex items-center justify-center">MR</button>
+        <button data-action="mc" class="btn-calc h-14 rounded-2xl font-medium text-sm flex items-center justify-center">MC</button>
+        <button data-action="negate" class="btn-calc h-14 rounded-2xl font-medium text-sm flex items-center justify-center">+/-</button>
+
+        <!-- Row 2: Δ%, 7, 8, 9, ÷ (또는 이미지상 2행 5열 주황 연산자) -->
+        <button data-action="delta-pct" class="btn-calc h-14 rounded-2xl font-semibold text-sm flex items-center justify-center tracking-tighter">Δ%</button>
+        <button data-num="7" class="btn-calc h-14 rounded-2xl font-semibold text-lg flex items-center justify-center">7</button>
+        <button data-num="8" class="btn-calc h-14 rounded-2xl font-semibold text-lg flex items-center justify-center">8</button>
+        <button data-num="9" class="btn-calc h-14 rounded-2xl font-semibold text-lg flex items-center justify-center">9</button>
+        <button data-op="÷" class="btn-orange h-14 rounded-2xl font-bold text-xl flex items-center justify-center">÷</button>
+
+        <!-- Row 3: √, 4, 5, 6, × -->
+        <button data-action="sqrt" class="btn-calc h-14 rounded-2xl font-medium text-lg flex items-center justify-center">√</button>
+        <button data-num="4" class="btn-calc h-14 rounded-2xl font-semibold text-lg flex items-center justify-center">4</button>
+        <button data-num="5" class="btn-calc h-14 rounded-2xl font-semibold text-lg flex items-center justify-center">5</button>
+        <button data-num="6" class="btn-calc h-14 rounded-2xl font-semibold text-lg flex items-center justify-center">6</button>
+        <button data-op="×" class="btn-orange h-14 rounded-2xl font-bold text-lg flex items-center justify-center leading-none">×</button>
+
+        <!-- Row 4: %, 1, 2, 3, - -->
+        <button data-action="pct" class="btn-calc h-14 rounded-2xl font-medium text-base flex items-center justify-center">%</button>
+        <button data-num="1" class="btn-calc h-14 rounded-2xl font-semibold text-lg flex items-center justify-center">1</button>
+        <button data-num="2" class="btn-calc h-14 rounded-2xl font-semibold text-lg flex items-center justify-center">2</button>
+        <button data-num="3" class="btn-calc h-14 rounded-2xl font-semibold text-lg flex items-center justify-center">3</button>
+        <button data-op="-" class="btn-orange h-14 rounded-2xl font-bold text-2xl flex items-center justify-center leading-none pb-0.5">-</button>
+
+        <!-- Row 5: CEC, ., 0, =, + -->
+        <button data-action="clear" class="btn-calc h-14 rounded-2xl font-semibold text-xs tracking-tight flex items-center justify-center">CEC</button>
+        <button data-action="decimal" class="btn-calc h-14 rounded-2xl font-extrabold text-xl flex items-center justify-center pb-2">.</button>
+        <button data-num="0" class="btn-calc h-14 rounded-2xl font-semibold text-lg flex items-center justify-center">0</button>
+        <button data-action="equals" class="btn-orange h-14 rounded-2xl font-bold text-xl flex items-center justify-center">=</button>
+        <button data-op="+" class="btn-orange h-14 rounded-2xl font-bold text-xl flex items-center justify-center">+</button>
+
+      </div>
+    </div>
+
+    <!-- 하단 부가 기능 / 안내 배지 -->
+    <div class="mt-4 flex items-center justify-between text-xs text-neutral-500 px-3">
+      <div class="flex items-center gap-1.5">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span>키보드 입력 지원 (Enter, 숫자, 사칙연산)</span>
+      </div>
+      <button id="sound-toggle" class="hover:text-neutral-800 transition-colors flex items-center gap-1 bg-white/70 backdrop-blur px-2.5 py-1 rounded-full border border-black/5 shadow-sm">
+        <span id="sound-icon">🔊</span> 소리 켬
+      </button>
+    </div>
+
+    <!-- 기능 안내 툴팁 모달 트리거 -->
+    <div class="mt-2 text-center">
+      <button id="guide-btn" class="text-[11px] text-neutral-400 hover:text-neutral-600 underline">
+        Δ% 및 특수 버튼 사용법 보기
+      </button>
+    </div>
+
+    <div id="guide-modal" class="hidden mt-3 p-3.5 bg-white/90 backdrop-blur rounded-2xl border border-black/10 text-xs text-neutral-600 shadow-lg space-y-1.5 transition-all">
+      <p><strong>Δ% (변화율 계산):</strong> 이전값 누르고 [Δ%] 누른 후 변경값 입력 후 [=] 누르면 증감 백분율(%) 계산</p>
+      <p><strong>CEC (Clear):</strong> 한 번 누르면 현재 입력값(CE) 초기화, 한 번 더 누르면 전체 계산(C) 리셋</p>
+      <p><strong>M+, M-, MR, MC:</strong> 메모리 더하기, 빼기, 불러오기, 비우기</p>
+    </div>
+  </div>
+
+  <script>
+    // --- Audio Feedback (Web Audio API 사용, 외부 의존성 없음) ---
+    let soundEnabled = true;
+    let audioCtx = null;
+
+    function playBeep(freq = 600, duration = 0.04, type = 'sine') {
+      if (!soundEnabled) return;
+      try {
+        if (!audioCtx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          audioCtx = new AudioContext();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        
+        gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {
+        // AudioContext 차단 등의 경우 무시
+      }
+    }
+
+    // --- State Variables ---
+    let currentValue = '0';      // 메인 화면에 표시되는 값
+    let previousValue = null;    // 이전 저장 값
+    let currentOperator = null;  // 현재 연산자 (+, -, ×, ÷, Δ%)
+    let shouldResetDisplay = false;
+    let memoryValue = 0;         // 메모리 저장소
+    let isDeltaMode = false;     // 변화율 계산 모드 여부
+    let lastKeyWasClear = false;
+
+    // --- DOM Elements ---
+    const mainDisplay = document.getElementById('main-display');
+    const subDisplay = document.getElementById('sub-display');
+    const opIndicator = document.getElementById('op-indicator');
+    const memIndicator = document.getElementById('mem-indicator');
+    const soundToggle = document.getElementById('sound-toggle');
+    const soundIcon = document.getElementById('sound-icon');
+    const guideBtn = document.getElementById('guide-btn');
+    const guideModal = document.getElementById('guide-modal');
+
+    // 글자 길이에 따른 폰트 자동 축소
+    function updateDisplay() {
+      // 천 단위 콤마 서식화 (소수점 고려)
+      let formatted = currentValue;
+      if (!isNaN(currentValue) && currentValue !== '') {
+        const parts = currentValue.split('.');
+        parts[0] = Number(parts[0]).toLocaleString('en-US');
+        formatted = parts.length > 1 ? `${parts[0]}.${parts[1]}` : parts[0];
+      }
+
+      mainDisplay.textContent = formatted;
+
+      const len = formatted.length;
+      if (len > 12) {
+        mainDisplay.className = 'lcd-font text-white text-[24px] font-medium leading-none tracking-tight';
+      } else if (len > 8) {
+        mainDisplay.className = 'lcd-font text-white text-[32px] font-medium leading-none tracking-tight';
+      } else {
+        mainDisplay.className = 'lcd-font text-white text-[42px] font-medium leading-none tracking-tight';
+      }
+
+      // 메모리 인디케이터
+      if (memoryValue !== 0) {
+        memIndicator.classList.remove('opacity-0');
+      } else {
+        memIndicator.classList.add('opacity-0');
+      }
+
+      // 현재 연산자 인디케이터
+      if (currentOperator) {
+        opIndicator.textContent = currentOperator;
+      } else {
+        opIndicator.textContent = '';
+      }
+    }
+
+    function inputDigit(digit) {
+      playBeep(750, 0.03, 'sine');
+      lastKeyWasClear = false;
+
+      if (currentValue === '0' || shouldResetDisplay) {
+        currentValue = digit;
+        shouldResetDisplay = false;
+      } else {
+        if (currentValue.length < 15) {
+          currentValue += digit;
+        }
+      }
+      updateDisplay();
+    }
+
+    function inputDecimal() {
+      playBeep(800, 0.03, 'sine');
+      lastKeyWasClear = false;
+
+      if (shouldResetDisplay) {
+        currentValue = '0.';
+        shouldResetDisplay = false;
+      } else if (!currentValue.includes('.')) {
+        currentValue += '.';
+      }
+      updateDisplay();
+    }
+
+    function handleOperator(nextOp) {
+      playBeep(900, 0.04, 'triangle');
+      lastKeyWasClear = false;
+      const inputValue = parseFloat(currentValue);
+
+      if (currentOperator && !shouldResetDisplay) {
+        calculate();
+      } else {
+        previousValue = inputValue;
+      }
+
+      currentOperator = nextOp;
+      shouldResetDisplay = true;
+      subDisplay.textContent = `${previousValue} ${nextOp}`;
+      updateDisplay();
+    }
+
+    function calculate() {
+      if (currentOperator === null || previousValue === null) return;
+
+      const prev = parseFloat(previousValue);
+      const curr = parseFloat(currentValue);
+      let result = 0;
+
+      switch (currentOperator) {
+        case '+':
+          result = prev + curr;
+          break;
+        case '-':
+          result = prev - curr;
+          break;
+        case '×':
+          result = prev * curr;
+          break;
+        case '÷':
+          if (curr === 0) {
+            currentValue = 'Error';
+            subDisplay.textContent = '0으로 나눌 수 없음';
+            previousValue = null;
+            currentOperator = null;
+            shouldResetDisplay = true;
+            updateDisplay();
+            return;
+          }
+          result = prev / curr;
+          break;
+        case 'Δ%':
+          // 변화율 계산 공식: ((현재값 - 이전값) / 이전값) * 100
+          if (prev === 0) {
+            result = 0;
+          } else {
+            result = ((curr - prev) / Math.abs(prev)) * 100;
+          }
+          break;
+        default:
+          return;
+      }
+
+      // 부동소수점 오차 보정 (최대 10자리)
+      result = Math.round(result * 1e10) / 1e10;
+      subDisplay.textContent = `${prev} ${currentOperator} ${curr} =`;
+      currentValue = String(result);
+      previousValue = result;
+      currentOperator = null;
+      shouldResetDisplay = true;
+      updateDisplay();
+    }
+
+    function handleClear() {
+      playBeep(450, 0.04, 'square');
+      if (!lastKeyWasClear && currentValue !== '0') {
+        // 1회 누름: CE (현재 입력값만 지움)
+        currentValue = '0';
+        lastKeyWasClear = true;
+      } else {
+        // 2회 연속 누름 또는 이미 0일 때: C (전체 초기화)
+        currentValue = '0';
+        previousValue = null;
+        currentOperator = null;
+        subDisplay.textContent = '';
+        lastKeyWasClear = false;
+      }
+      shouldResetDisplay = false;
+      updateDisplay();
+    }
+
+    function handleNegate() {
+      playBeep(650, 0.03, 'sine');
+      if (currentValue === '0' || currentValue === 'Error') return;
+      currentValue = (parseFloat(currentValue) * -1).toString();
+      updateDisplay();
+    }
+
+    function handleSqrt() {
+      playBeep(850, 0.04, 'sine');
+      const val = parseFloat(currentValue);
+      if (val < 0) {
+        currentValue = 'Error';
+        subDisplay.textContent = '음수 제곱근 불가';
+      } else {
+        const res = Math.sqrt(val);
+        subDisplay.textContent = `√(${val})`;
+        currentValue = String(Math.round(res * 1e10) / 1e10);
+      }
+      shouldResetDisplay = true;
+      updateDisplay();
+    }
+
+    function handlePercent() {
+      playBeep(700, 0.03, 'sine');
+      const curr = parseFloat(currentValue);
+      let res;
+      if (previousValue !== null && currentOperator) {
+        // 예: 200 + 10% = 200의 10%인 20
+        res = (previousValue * curr) / 100;
+      } else {
+        res = curr / 100;
+      }
+      currentValue = String(res);
+      updateDisplay();
+    }
+
+    function handleDeltaPercent() {
+      playBeep(880, 0.04, 'triangle');
+      // 변화율 모드 진입
+      previousValue = parseFloat(currentValue);
+      currentOperator = 'Δ%';
+      subDisplay.textContent = `Δ% 기준: ${previousValue}`;
+      shouldResetDisplay = true;
+      updateDisplay();
+    }
+
+    // 메모리 연산 기능
+    function handleMemory(action) {
+      playBeep(600, 0.04, 'sine');
+      const val = parseFloat(currentValue) || 0;
+      switch (action) {
+        case 'm-plus':
+          memoryValue += val;
+          subDisplay.textContent = `M+ (${memoryValue})`;
+          shouldResetDisplay = true;
+          break;
+        case 'm-minus':
+          memoryValue -= val;
+          subDisplay.textContent = `M- (${memoryValue})`;
+          shouldResetDisplay = true;
+          break;
+        case 'mr':
+          currentValue = String(memoryValue);
+          subDisplay.textContent = `MR: ${memoryValue}`;
+          shouldResetDisplay = true;
+          break;
+        case 'mc':
+          memoryValue = 0;
+          subDisplay.textContent = '메모리 초기화';
+          break;
+      }
+      updateDisplay();
+    }
+
+    // 마우스 및 터치 버튼 이벤트 리스너 등록
+    document.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const num = btn.dataset.num;
+        const op = btn.dataset.op;
+        const action = btn.dataset.action;
+
+        if (num !== undefined) {
+          inputDigit(num);
+        } else if (op !== undefined) {
+          handleOperator(op);
+        } else if (action !== undefined) {
+          switch (action) {
+            case 'clear': handleClear(); break;
+            case 'decimal': inputDecimal(); break;
+            case 'equals':
+              playBeep(980, 0.05, 'triangle');
+              calculate();
+              break;
+            case 'negate': handleNegate(); break;
+            case 'sqrt': handleSqrt(); break;
+            case 'pct': handlePercent(); break;
+            case 'delta-pct': handleDeltaPercent(); break;
+            case 'm-plus':
+            case 'm-minus':
+            case 'mr':
+            case 'mc':
+              handleMemory(action);
+              break;
+          }
+        }
+      });
+    });
+
+    // 키보드 지원
+    window.addEventListener('keydown', (e) => {
+      // 숫자 키
+      if (e.key >= '0' && e.key <= '9') {
+        const btn = document.querySelector(`button[data-num="${e.key}"]`);
+        triggerVisualFeedback(btn);
+        inputDigit(e.key);
+      } else if (e.key === '.') {
+        const btn = document.querySelector('button[data-action="decimal"]');
+        triggerVisualFeedback(btn);
+        inputDecimal();
+      } else if (e.key === '+' || e.key === '-') {
+        const btn = document.querySelector(`button[data-op="${e.key}"]`);
+        triggerVisualFeedback(btn);
+        handleOperator(e.key);
+      } else if (e.key === '*') {
+        const btn = document.querySelector('button[data-op="×"]');
+        triggerVisualFeedback(btn);
+        handleOperator('×');
+      } else if (e.key === '/') {
+        e.preventDefault();
+        const btn = document.querySelector('button[data-op="÷"]');
+        triggerVisualFeedback(btn);
+        handleOperator('÷');
+      } else if (e.key === 'Enter' || e.key === '=') {
+        e.preventDefault();
+        const btn = document.querySelector('button[data-action="equals"]');
+        triggerVisualFeedback(btn);
+        playBeep(980, 0.05, 'triangle');
+        calculate();
+      } else if (e.key === 'Backspace' || e.key === 'Escape') {
+        const btn = document.querySelector('button[data-action="clear"]');
+        triggerVisualFeedback(btn);
+        handleClear();
+      } else if (e.key === '%') {
+        const btn = document.querySelector('button[data-action="pct"]');
+        triggerVisualFeedback(btn);
+        handlePercent();
+      }
+    });
+
+    function triggerVisualFeedback(btn) {
+      if (!btn) return;
+      btn.classList.add('pressed');
+      setTimeout(() => btn.classList.remove('pressed'), 120);
+    }
+
+    // 소리 켜기/끄기 토글
+    soundToggle.addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      soundIcon.textContent = soundEnabled ? '🔊' : '🔇';
+      soundToggle.classList.toggle('opacity-60', !soundEnabled);
+    });
+
+    // 설명서 토글
+    guideBtn.addEventListener('click', () => {
+      guideModal.classList.toggle('hidden');
+    });
+
+    // 초기 상태 렌더링
+    updateDisplay();
+  </script>
+</body>
+</html>

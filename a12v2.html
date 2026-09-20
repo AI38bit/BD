@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>스케줄 관리 캘린더</title>
+  <style>
+    :root {
+      --primary-teal: #005a54;
+      --primary-dark: #003e3a;
+      --accent-yellow: #f5a623;
+      --border-color: #c0d3d0;
+      --bg-gray: #f8faf9;
+      --text-dark: #222;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Malgun Gothic", sans-serif;
+    }
+
+    body {
+      background-color: #eaeff0;
+      padding: 20px;
+      color: var(--text-dark);
+    }
+
+    .app-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: #fff;
+      border: 1px solid #aaa;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    /* Top Controls */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px;
+      background: #fff;
+      border-bottom: 2px solid var(--primary-teal);
+    }
+
+    .title-badge {
+      background-color: var(--primary-teal);
+      color: #fff;
+      padding: 6px 18px;
+      font-weight: bold;
+      border-radius: 3px;
+      font-size: 1.1rem;
+    }
+
+    .year-select-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .year-select-wrap select {
+      padding: 4px 8px;
+      border: 1px solid #aaa;
+      border-radius: 3px;
+      font-size: 1rem;
+    }
+
+    /* Month Selector Bar */
+    .month-bar {
+      display: flex;
+      background: var(--primary-teal);
+      padding: 4px 8px;
+      gap: 4px;
+      overflow-x: auto;
+    }
+
+    .month-btn {
+      flex: 1;
+      min-width: 55px;
+      padding: 8px 4px;
+      border: none;
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.85rem;
+      border-radius: 2px;
+      cursor: pointer;
+      text-align: center;
+      transition: 0.2s;
+    }
+
+    .month-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .month-btn.active {
+      background: var(--accent-yellow);
+      color: #000;
+    }
+
+    /* Calendar Grid View */
+    #calendar-view {
+      display: block;
+    }
+
+    .day-names-row {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      background: var(--primary-teal);
+      color: #fff;
+      text-align: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-top: 1px solid #004540;
+    }
+
+    .day-names-row div {
+      padding: 6px 0;
+      border-right: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      grid-auto-rows: minmax(110px, auto);
+      border-left: 1px solid var(--border-color);
+      border-top: 1px solid var(--border-color);
+      background: #fff;
+    }
+
+    .calendar-cell {
+      border-right: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+      padding: 4px 6px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+      position: relative;
+      transition: background 0.15s;
+    }
+
+    .calendar-cell:hover {
+      background-color: #f1f8f7;
+    }
+
+    .calendar-cell.other-month {
+      background-color: #f7f7f7;
+      color: #aaa;
+      cursor: default;
+    }
+
+    .cell-number {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #444;
+      margin-bottom: 4px;
+    }
+
+    .cell-events {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      overflow: hidden;
+    }
+
+    .event-badge {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.72rem;
+      background: #eef6f5;
+      padding: 2px 4px;
+      border-radius: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      border-left: 3px solid var(--primary-teal);
+    }
+
+    .event-badge span.time {
+      font-weight: 600;
+      color: #005a54;
+      flex-shrink: 0;
+    }
+
+    /* Timeline Detail View */
+    #timeline-view {
+      display: none;
+      padding: 20px;
+    }
+
+    .timeline-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--primary-teal);
+    }
+
+    .back-btn {
+      background: var(--primary-teal);
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .back-btn:hover {
+      background: var(--primary-dark);
+    }
+
+    .form-panel {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) 100px;
+      gap: 12px;
+      background: var(--bg-gray);
+      padding: 16px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      margin-bottom: 24px;
+      align-items: flex-end;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .form-group label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #555;
+    }
+
+    .form-group input, .form-group select {
+      padding: 6px 8px;
+      border: 1px solid #bbb;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+
+    .add-btn {
+      background: var(--accent-yellow);
+      color: #000;
+      border: none;
+      padding: 7px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .add-btn:hover {
+      background: #e0961d;
+    }
+
+    .timeline-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 480px;
+      overflow-y: auto;
+    }
+
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 80px 40px 1fr 50px;
+      align-items: center;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-left: 5px solid var(--primary-teal);
+      padding: 10px 14px;
+      border-radius: 4px;
+    }
+
+    .timeline-time {
+      font-weight: 700;
+      color: var(--primary-teal);
+      font-size: 0.85rem;
+    }
+
+    .timeline-icon {
+      font-size: 1.2rem;
+    }
+
+    .timeline-title {
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .del-btn {
+      background: transparent;
+      border: none;
+      color: #d9534f;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+  <!-- Calendar View -->
+  <div id="calendar-view">
+    <div class="top-bar">
+      <div class="title-badge" id="calendar-title">September 2026</div>
+      <div class="year-select-wrap">
+        <label for="year-select">연도:</label>
+        <select id="year-select"></select>
+      </div>
+    </div>
+
+    <div class="month-bar" id="month-bar"></div>
+
+    <div class="day-names-row">
+      <div>Sunday</div><div>Monday</div><div>Tuesday</div><div>Wednesday</div>
+      <div>Thursday</div><div>Friday</div><div>Saturday</div>
+    </div>
+
+    <div class="calendar-grid" id="calendar-cells"></div>
+  </div>
+
+  <!-- Timeline View -->
+  <div id="timeline-view">
+    <div class="timeline-header">
+      <h2 id="timeline-date-title">2026-09-01 일정 타임라인</h2>
+      <button class="back-btn" id="btn-back">← 달력으로 돌아가기</button>
+    </div>
+
+    <div class="form-panel">
+      <div class="form-group">
+        <label>시작 시간</label>
+        <input type="time" id="input-start-time" value="09:00">
+      </div>
+      <div class="form-group">
+        <label>종료 시간</label>
+        <input type="time" id="input-end-time" value="10:00">
+      </div>
+      <div class="form-group">
+        <label>업무 구분</label>
+        <select id="input-category">
+          <option value="💼 회의">💼 회의 (Meeting)</option>
+          <option value="💻 개발/작업">💻 개발/작업 (Work)</option>
+          <option value="📞 전화/상담">📞 통화 (Call)</option>
+          <option value="📝 기획/보고">📝 기획/보고 (Planning)</option>
+          <option value="☕ 휴식/개인">☕ 개인/휴식 (Break)</option>
+          <option value="🚨 긴급/점검">🚨 점검/긴급 (Inspection)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>일정 제목</label>
+        <input type="text" id="input-title" placeholder="예: 프로젝트 리뷰">
+      </div>
+      <button class="add-btn" id="btn-add-schedule">등록</button>
+    </div>
+
+    <div class="timeline-list" id="timeline-list"></div>
+  </div>
+</div>
+
+<script>
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const fullMonths = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+  let currentDate = new Date();
+  let currentYear = currentDate.getFullYear();
+  let currentMonth = currentDate.getMonth(); // 0 ~ 11
+  let activeSelectedDateKey = null;
+
+  // 로컬스토리지 연동 일정 데이터 { "YYYY-MM-DD": [ { id, startTime, endTime, categoryIcon, categoryName, title } ] }
+  let schedules = JSON.parse(localStorage.getItem('user_schedules') || '{}');
+
+  function saveSchedules() {
+    localStorage.setItem('user_schedules', JSON.stringify(schedules));
+  }
+
+  // 초기 렌더링 세팅
+  function init() {
+    // 연도 셀렉트 생성 (현재 기준 -5년 ~ +5년)
+    const yearSelect = document.getElementById('year-select');
+    for (let y = currentYear - 5; y <= currentYear + 5; y++) {
+      const opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = `${y}년`;
+      if (y === currentYear) opt.selected = true;
+      yearSelect.appendChild(opt);
+    }
+    yearSelect.addEventListener('change', (e) => {
+      currentYear = parseInt(e.target.value);
+      renderCalendar();
+    });
+
+    // 월 선택 바 생성
+    const monthBar = document.getElementById('month-bar');
+    months.forEach((m, idx) => {
+      const btn = document.createElement('button');
+      btn.className = `month-btn ${idx === currentMonth ? 'active' : ''}`;
+      btn.textContent = m;
+      btn.addEventListener('click', () => {
+        currentMonth = idx;
+        document.querySelectorAll('.month-btn').forEach((b, i) => {
+          b.classList.toggle('active', i === idx);
+        });
+        renderCalendar();
+      });
+      monthBar.appendChild(btn);
+    });
+
+    document.getElementById('btn-back').addEventListener('click', () => {
+      document.getElementById('timeline-view').style.display = 'none';
+      document.getElementById('calendar-view').style.display = 'block';
+      renderCalendar();
+    });
+
+    document.getElementById('btn-add-schedule').addEventListener('click', addSchedule);
+
+    renderCalendar();
+  }
+
+  // 달력 렌더링
+  function renderCalendar() {
+    document.getElementById('calendar-title').textContent = `${fullMonths[currentMonth]} ${currentYear}`;
+
+    const cellsContainer = document.getElementById('calendar-cells');
+    cellsContainer.innerHTML = '';
+
+    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+    const lastDate = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const prevLastDate = new Date(currentYear, currentMonth, 0).getDate();
+
+    // 이전 달 잔여 일자
+    for (let i = firstDay - 1; i >= 0; i--) {
+      const cell = document.createElement('div');
+      cell.className = 'calendar-cell other-month';
+      cell.innerHTML = `<span class="cell-number">${prevLastDate - i}</span>`;
+      cellsContainer.appendChild(cell);
+    }
+
+    // 이번 달 일자
+    for (let d = 1; d <= lastDate; d++) {
+      const cell = document.createElement('div');
+      cell.className = 'calendar-cell';
+      const dateKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+
+      const cellNumber = document.createElement('span');
+      cellNumber.className = 'cell-number';
+      cellNumber.textContent = d;
+      cell.appendChild(cellNumber);
+
+      // 일정 목록 표시
+      const eventsWrap = document.createElement('div');
+      eventsWrap.className = 'cell-events';
+      const dayEvents = schedules[dateKey] || [];
+
+      // 시간순 정렬 표시
+      dayEvents.sort((a, b) => a.startTime.localeCompare(b.startTime));
+      dayEvents.forEach(evt => {
+        const item = document.createElement('div');
+        item.className = 'event-badge';
+        item.innerHTML = `<span class="time">${evt.startTime}</span> <span>${evt.categoryIcon}</span> <span>${evt.title}</span>`;
+        eventsWrap.appendChild(item);
+      });
+
+      cell.appendChild(eventsWrap);
+
+      // 날짜 클릭 시 타임라인 뷰로 전환
+      cell.addEventListener('click', () => openTimeline(dateKey));
+      cellsContainer.appendChild(cell);
+    }
+
+    // 다음 달 앞부분 패딩 (7열 맞춤)
+    const totalCells = firstDay + lastDate;
+    const remaining = (7 - (totalCells % 7)) % 7;
+    for (let i = 1; i <= remaining; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'calendar-cell other-month';
+      cell.innerHTML = `<span class="cell-number">${i}</span>`;
+      cellsContainer.appendChild(cell);
+    }
+  }
+
+  // 타임라인 열기
+  function openTimeline(dateKey) {
+    activeSelectedDateKey = dateKey;
+    document.getElementById('calendar-view').style.display = 'none';
+    document.getElementById('timeline-view').style.display = 'block';
+    document.getElementById('timeline-date-title').textContent = `${dateKey} 일정 타임라인`;
+
+    document.getElementById('input-title').value = '';
+    renderTimelineList();
+  }
+
+  // 타임라인 리스트 렌더링
+  function renderTimelineList() {
+    const listContainer = document.getElementById('timeline-list');
+    listContainer.innerHTML = '';
+    const dayEvents = schedules[activeSelectedDateKey] || [];
+
+    dayEvents.sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+    if (dayEvents.length === 0) {
+      listContainer.innerHTML = '<p style="color: #888; font-size: 0.9rem;">등록된 일정이 없습니다. 위 입력창에서 새 일정을 추가하세요.</p>';
+      return;
+    }
+
+    dayEvents.forEach(evt => {
+      const row = document.createElement('div');
+      row.className = 'timeline-item';
+      row.innerHTML = `
+        <div class="timeline-time">${evt.startTime} ~ ${evt.endTime}</div>
+        <div class="timeline-icon">${evt.categoryIcon}</div>
+        <div class="timeline-title">${evt.title}</div>
+        <button class="del-btn" onclick="deleteSchedule('${evt.id}')">삭제</button>
+      `;
+      listContainer.appendChild(row);
+    });
+  }
+
+  // 일정 등록
+  function addSchedule() {
+    const startTime = document.getElementById('input-start-time').value;
+    const endTime = document.getElementById('input-end-time').value;
+    const catValue = document.getElementById('input-category').value;
+    const title = document.getElementById('input-title').value.trim();
+
+    if (!title) {
+      alert('일정 제목을 입력하세요.');
+      return;
+    }
+
+    const [categoryIcon, categoryName] = catValue.split(' ');
+
+    const newEvent = {
+      id: Date.now().toString(),
+      startTime,
+      endTime,
+      categoryIcon,
+      categoryName,
+      title
+    };
+
+    if (!schedules[activeSelectedDateKey]) {
+      schedules[activeSelectedDateKey] = [];
+    }
+
+    schedules[activeSelectedDateKey].push(newEvent);
+    saveSchedules();
+    document.getElementById('input-title').value = '';
+    renderTimelineList();
+  }
+
+  // 일정 삭제
+  window.deleteSchedule = function(id) {
+    if (!confirm('이 일정을 삭제하시겠습니까?')) return;
+    schedules[activeSelectedDateKey] = schedules[activeSelectedDateKey].filter(evt => evt.id !== id);
+    saveSchedules();
+    renderTimelineList();
+  };
+
+  window.onload = init;
+</script>
+</body>
+</html>

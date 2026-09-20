@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>HAISH 비주얼 포커스 타이머</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    * {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mono-font {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    
+    /* Hardware Case Shadows & Aesthetic */
+    .timer-body {
+      background: linear-gradient(145deg, #f7f6f1, #edeade);
+      box-shadow: 
+        0 24px 48px -12px rgba(92, 85, 75, 0.22),
+        0 8px 16px -4px rgba(0, 0, 0, 0.08),
+        inset 0 1px 2px rgba(255, 255, 255, 0.95),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.08);
+    }
+    
+    .dial-rim {
+      box-shadow: 
+        inset 0 4px 10px rgba(0, 0, 0, 0.12),
+        inset 0 1px 3px rgba(0, 0, 0, 0.1),
+        0 2px 4px rgba(255, 255, 255, 0.9);
+      background: radial-gradient(circle, #fcfbf7 0%, #eae7dc 100%);
+    }
+
+    /* Knob Neumorphism */
+    .knob-3d {
+      background: linear-gradient(145deg, #ffffff, #dcd7c9);
+      box-shadow: 
+        0 6px 14px rgba(0,0,0,0.18),
+        0 2px 4px rgba(0,0,0,0.1),
+        inset 0 2px 2px rgba(255,255,255,0.9),
+        inset 0 -2px 3px rgba(0,0,0,0.15);
+    }
+    .knob-ridge {
+      box-shadow: 
+        0 1px 1px rgba(255,255,255,0.6),
+        inset 0 1px 1px rgba(0,0,0,0.25);
+    }
+
+    /* Physical Top Button */
+    .top-button {
+      transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 
+        0 -2px 4px rgba(0,0,0,0.06),
+        0 4px 6px rgba(0,0,0,0.12),
+        inset 0 1px 1px rgba(255,255,255,0.4);
+    }
+    .top-button:active, .top-button.pressed {
+      transform: translateY(3px);
+      box-shadow: 
+        0 1px 2px rgba(0,0,0,0.15),
+        inset 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    /* LED Lights */
+    .led-off {
+      background-color: #2b382d;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.6);
+    }
+    .led-green-on {
+      background-color: #10b981;
+      box-shadow: 
+        0 0 10px 2px #34d399,
+        0 0 2px #10b981,
+        inset 0 1px 1px #a7f3d0;
+    }
+    .led-blinking {
+      animation: ledPulse 1s infinite alternate ease-in-out;
+    }
+    .led-fast-blinking {
+      animation: ledPulseFast 0.3s infinite alternate ease-in-out;
+    }
+    @keyframes ledPulse {
+      0% { opacity: 0.2; transform: scale(0.95); }
+      100% { opacity: 1; transform: scale(1.05); }
+    }
+    @keyframes ledPulseFast {
+      0% { opacity: 0.1; background-color: #ef4444; box-shadow: none; }
+      100% { opacity: 1; background-color: #ef4444; box-shadow: 0 0 12px 3px #f87171; }
+    }
+
+    /* Soft Slider Track */
+    .switch-track {
+      background: #e2ded4;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.15), 0 1px 1px rgba(255,255,255,0.8);
+    }
+    .switch-thumb {
+      background: linear-gradient(180deg, #ffffff 0%, #e2ded5 100%);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2), 0 1px 1px rgba(0,0,0,0.1);
+    }
+
+    /* Smooth Dragging Guard */
+    .no-select {
+      touch-action: none;
+    }
+  </style>
+</head>
+<body class="bg-[#f2efe9] min-h-screen flex flex-col items-center justify-between p-3 sm:p-6 text-stone-800 antialiased overflow-x-hidden">
+  
+  <header class="w-full max-w-xl flex items-center justify-between py-2 px-1">
+    <div class="flex items-center space-x-2">
+      <div class="w-7 h-7 rounded-lg bg-[#5c7a4b] text-white flex items-center justify-center font-bold text-xs shadow-sm">
+        H
+      </div>
+      <h1 class="text-lg font-bold tracking-tight text-stone-800">Visual Time Timer</h1>
+      <span class="text-[11px] px-2 py-0.5 rounded-full bg-stone-200/70 text-stone-600 font-medium">STEP 02~05</span>
+    </div>
+
+    <div class="flex items-center space-x-2">
+      <!-- Mute/Tick Audio Toggle -->
+      <button id="tick-toggle-btn" class="p-2 rounded-xl bg-white/70 hover:bg-white text-stone-600 hover:text-stone-900 border border-stone-300/60 shadow-sm transition flex items-center gap-1.5 text-xs font-semibold" title="초침 째깍음 토글">
+        <svg id="sound-icon-on" class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+        </svg>
+        <svg id="sound-icon-off" class="w-4 h-4 text-stone-400 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+        </svg>
+        <span class="hidden sm:inline" id="tick-text">째깍음</span>
+      </button>
+
+      <!-- Guide Info Modal Button -->
+      <button id="guide-open-btn" class="p-2 rounded-xl bg-white/70 hover:bg-white text-stone-600 hover:text-stone-900 border border-stone-300/60 shadow-sm transition" title="사용 방법">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </button>
+
+      <!-- Fullscreen Button -->
+      <button id="fullscreen-btn" class="p-2 rounded-xl bg-white/70 hover:bg-white text-stone-600 hover:text-stone-900 border border-stone-300/60 shadow-sm transition" title="전체화면">
+        <svg id="fullscreen-icon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="w-full max-w-sm sm:max-w-md flex flex-col items-center my-auto py-2">
+    
+    <!-- Physical Container with Top Push Button -->
+    <div class="relative w-full flex flex-col items-center">
+      
+      <!-- STEP 04: Physical Top Pause/Resume Button -->
+      <div class="z-10 flex flex-col items-center">
+        <button id="physical-top-btn" class="top-button bg-[#5e7c4f] hover:bg-[#526e44] active:bg-[#465e39] text-white/90 text-xs font-bold tracking-wider uppercase px-8 py-2 rounded-t-xl transition-transform flex items-center justify-center gap-1.5 border-t border-x border-[#739662] shadow-md cursor-pointer select-none" title="클릭하거나 스페이스바로 일시정지/재개">
+          <span id="top-btn-label">PAUSE / RESUME</span>
+          <span class="text-[10px] opacity-75 font-normal ml-1">(Space)</span>
+        </button>
+      </div>
+
+      <!-- Main Cream Shell Body (Image HAISH recreation) -->
+      <div class="timer-body w-full aspect-square rounded-[44px] p-5 sm:p-7 relative flex flex-col items-center justify-between border border-[#e3dfd3] select-none no-select">
+        
+        <!-- Top Face Row: Brand Logo & Status LED -->
+        <div class="w-full flex items-center justify-between px-2 pt-1 z-10">
+          <div class="text-[11px] font-extrabold tracking-widest text-stone-500 uppercase flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-stone-400"></span>
+            FOCUS CLOCK
+          </div>
+          
+          <!-- STEP 03 & 04 Status LED -->
+          <div class="flex items-center gap-1.5 bg-stone-300/40 px-2 py-1 rounded-full backdrop-blur-xs border border-white/60">
+            <div id="status-led" class="w-2.5 h-2.5 rounded-full led-off transition-all duration-300"></div>
+            <span id="status-led-text" class="text-[10px] font-semibold text-stone-500">대기</span>
+          </div>
+        </div>
+
+        <!-- Clock Face Dial -->
+        <div id="clock-dial-container" class="relative w-[84%] aspect-square rounded-full dial-rim flex items-center justify-center cursor-grab active:cursor-grabbing">
+          
+          <!-- SVG Sector Disc Layer -->
+          <svg id="timer-disc-svg" class="absolute inset-0 w-full h-full transform -rotate-90 rounded-full" viewBox="0 0 200 200">
+            <!-- Background base circle inside rim -->
+            <circle cx="100" cy="100" r="94" fill="#faf9f5" />
+            <!-- Remaining Olive/Sage Green Sector (Time pie) -->
+            <path id="pie-slice" d="M 100 100 L 100 6 A 94 94 0 0 1 100 6 Z" fill="#5e7c4f" />
+          </svg>
+
+          <!-- Dial Markings Layer (Numbers & Tick marks) -->
+          <div id="dial-ticks-container" class="absolute inset-0 pointer-events-none"></div>
+
+          <!-- STEP 02: Central Rotatable 3D Knob -->
+          <div id="knob-handle" class="relative z-20 w-16 h-16 sm:w-20 sm:h-20 rounded-full knob-3d flex items-center justify-center pointer-events-none transition-transform duration-75">
+            <!-- Knurled Edges Effect (Knob Ridges) -->
+            <div class="w-12 h-12 sm:w-15 sm:h-15 rounded-full bg-[#f3f0e6] border border-stone-200/80 flex items-center justify-center shadow-inner">
+              <div class="w-3 h-3 rounded-full bg-stone-400/60 shadow-inner"></div>
+            </div>
+            <!-- Pointer Notch -->
+            <div class="absolute top-1.5 w-1 h-2 rounded-full bg-stone-400 shadow-xs"></div>
+          </div>
+
+          <!-- Drag Interaction Overlay -->
+          <div id="dial-interactive-zone" class="absolute inset-0 z-30 rounded-full cursor-pointer"></div>
+        </div>
+
+        <!-- Bottom Face Row: Branding 'HAISH' & Digital Sub-display -->
+        <div class="w-full flex items-center justify-between px-3 pb-1 z-10">
+          <button id="toggle-digital-btn" class="flex items-center gap-1.5 text-stone-600 hover:text-stone-900 transition bg-white/40 hover:bg-white/70 px-2 py-0.5 rounded-lg border border-stone-300/40 text-xs">
+            <span class="text-[10px] text-stone-500 font-medium">디지털</span>
+            <span id="digital-time-display" class="mono-font font-bold text-stone-800 text-xs">00:00</span>
+          </button>
+          
+          <div class="text-right">
+            <span class="text-sm font-black tracking-widest text-stone-700">HAISH</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Quick Preset Buttons & Controls -->
+    <div class="w-full mt-4 flex flex-col gap-3">
+      <!-- Presets -->
+      <div class="grid grid-cols-5 gap-2 px-1">
+        <button data-mins="15" class="preset-btn py-2 px-1 rounded-xl bg-white text-stone-700 font-bold text-xs shadow-sm hover:bg-stone-100 hover:shadow border border-stone-200 transition">15분</button>
+        <button data-mins="25" class="preset-btn py-2 px-1 rounded-xl bg-white text-stone-700 font-bold text-xs shadow-sm hover:bg-stone-100 hover:shadow border border-stone-200 transition">25분 <span class="text-[9px] text-[#5e7c4f] font-normal block">뽀모도로</span></button>
+        <button data-mins="45" class="preset-btn py-2 px-1 rounded-xl bg-white text-stone-700 font-bold text-xs shadow-sm hover:bg-stone-100 hover:shadow border border-stone-200 transition">45분</button>
+        <button data-mins="60" class="preset-btn py-2 px-1 rounded-xl bg-white text-stone-700 font-bold text-xs shadow-sm hover:bg-stone-100 hover:shadow border border-stone-200 transition">60분</button>
+        <button id="reset-btn" class="py-2 px-1 rounded-xl bg-stone-200/80 hover:bg-stone-300 text-stone-700 font-bold text-xs shadow-sm border border-stone-300/60 transition flex items-center justify-center gap-1">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          리셋
+        </button>
+      </div>
+
+      <!-- STEP 05: Rear/Bottom Physical Switch Recreation (Silent / Low / High) -->
+      <div class="bg-white/80 backdrop-blur-sm p-3.5 rounded-2xl border border-stone-300/60 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 rounded-lg bg-stone-200 flex items-center justify-center text-stone-600">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <div>
+            <div class="text-xs font-bold text-stone-800 flex items-center gap-1">
+              <span>알림 사운드 모드</span>
+              <span class="text-[10px] text-stone-500 font-normal">(STEP 05)</span>
+            </div>
+            <div class="text-[11px] text-stone-500" id="sound-mode-desc">저음: 종료 시 부드러운 알람음</div>
+          </div>
+        </div>
+
+        <!-- 3-Position Slider Switch -->
+        <div class="flex items-center gap-1 bg-stone-200/90 p-1 rounded-xl w-full sm:w-auto">
+          <button data-mode="silent" class="sound-mode-btn flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-600 hover:text-stone-900 transition">무음</button>
+          <button data-mode="low" class="sound-mode-btn flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-stone-800 shadow-xs transition">저음</button>
+          <button data-mode="high" class="sound-mode-btn flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-600 hover:text-stone-900 transition">고음</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Usage Guide Modal -->
+  <div id="guide-modal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-[#fcfaf5] w-full max-w-md rounded-3xl p-6 shadow-2xl border border-stone-300 relative text-stone-800">
+      <button id="guide-close-btn" class="absolute top-4 right-4 p-2 rounded-full hover:bg-stone-200 text-stone-500 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      <div class="flex items-center gap-2.5 mb-4">
+        <div class="w-8 h-8 rounded-xl bg-[#5e7c4f] text-white flex items-center justify-center font-bold">⏱</div>
+        <div>
+          <h3 class="font-bold text-base">HAISH 비주얼 포커스 타이머 사용법</h3>
+          <p class="text-xs text-stone-500">실물 타이머 동작 방식 완벽 가이드</p>
+        </div>
+      </div>
+
+      <div class="space-y-3.5 text-xs text-stone-700">
+        <div class="p-2.5 rounded-xl bg-white border border-stone-200/80 flex items-start gap-2.5">
+          <span class="font-black text-[#5e7c4f] text-sm">02</span>
+          <div>
+            <strong class="text-stone-900 block font-semibold">시간(다이얼) 설정</strong>
+            마우스나 손가락으로 다이얼 원반을 시계 방향으로 드래그하여 0~60분 사이 원하는 시간을 맞춥니다.
+          </div>
+        </div>
+
+        <div class="p-2.5 rounded-xl bg-white border border-stone-200/80 flex items-start gap-2.5">
+          <span class="font-black text-[#5e7c4f] text-sm">03</span>
+          <div>
+            <strong class="text-stone-900 block font-semibold">자동 시작 & 집중</strong>
+            다이얼 설정을 마치고 손을 떼면 카운트다운이 자동 시작되며 녹색 부채꼴이 줄어듭니다.
+          </div>
+        </div>
+
+        <div class="p-2.5 rounded-xl bg-white border border-stone-200/80 flex items-start gap-2.5">
+          <span class="font-black text-[#5e7c4f] text-sm">04</span>
+          <div>
+            <strong class="text-stone-900 block font-semibold">일시정지 / 재개</strong>
+            상단의 녹색 물리 버튼을 누르거나 <kbd class="px-1.5 py-0.5 bg-stone-200 rounded text-[10px] font-mono">스페이스바</kbd>를 누르면 정지(LED 점멸) 및 재개됩니다.
+          </div>
+        </div>
+
+        <div class="p-2.5 rounded-xl bg-white border border-stone-200/80 flex items-start gap-2.5">
+          <span class="font-black text-[#5e7c4f] text-sm">05</span>
+          <div>
+            <strong class="text-stone-900 block font-semibold">알림 모드 선택</strong>
+            하단 스위치로 [무음: 불빛만 점멸] / [저음: 부드러운 소리] / [고음: 큰 비프음]을 선택할 수 있습니다.
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-5">
+        <button id="guide-confirm-btn" class="w-full py-2.5 rounded-xl bg-[#5e7c4f] hover:bg-[#4d6641] text-white font-bold text-xs shadow transition">
+          이해했습니다
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Time Up Alarm Overlay Modal -->
+  <div id="alarm-modal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center shadow-2xl border-2 border-emerald-500 animate-bounce">
+      <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+        </svg>
+      </div>
+      <h3 class="text-xl font-extrabold text-stone-800 mb-1">집중 시간 완료!</h3>
+      <p class="text-sm text-stone-600 mb-5">설정한 타이머가 종료되었습니다. 맑은 정신으로 스트레칭을 해보세요.</p>
+      <button id="stop-alarm-btn" class="w-full py-3 bg-[#5e7c4f] hover:bg-[#4d6641] text-white font-bold rounded-2xl shadow-lg transition">
+        확인 (알람 끄기)
+      </button>
+    </div>
+  </div>
+
+  <!-- Footer Info -->
+  <footer class="text-center text-stone-500 text-[11px] py-2">
+    <span>키보드 단축키: <kbd class="px-1 bg-stone-200 rounded font-mono">스페이스바</kbd> (일시정지/재개), <kbd class="px-1 bg-stone-200 rounded font-mono">R</kbd> (리셋)</span>
+  </footer>
+
+  <script>
+    // State management
+    const state = {
+      totalSeconds: 0,
+      remainingSeconds: 0,
+      isRunning: false,
+      isPaused: false,
+      isDragging: false,
+      autoStartTimerId: null,
+      countdownIntervalId: null,
+      soundMode: 'low', // 'silent' | 'low' | 'high'
+      tickSound: true,
+      alarmAudioActive: false
+    };
+
+    // Web Audio API Setup
+    let audioCtx = null;
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          audioCtx = new AudioContextClass();
+        }
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    // Sound Synthesizers
+    function playMechanicalTick() {
+      if (!state.tickSound) return;
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(1400, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 0.015);
+        gain.gain.setValueAtTime(0.04, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.015);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.02);
+      } catch(e) {}
+    }
+
+    function playDialClick() {
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, ctx.currentTime);
+        gain.gain.setValueAtTime(0.06, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.03);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.035);
+      } catch(e) {}
+    }
+
+    let alarmOscInterval = null;
+    function startAlarmSound() {
+      if (state.soundMode === 'silent') return;
+      state.alarmAudioActive = true;
+      const ctx = getAudioContext();
+      if (!ctx) return;
+
+      const volume = state.soundMode === 'high' ? 0.35 : 0.12;
+
+      function beepBeep() {
+        if (!state.alarmAudioActive) return;
+        try {
+          const now = ctx.currentTime;
+          [0, 0.14, 0.28, 0.42].forEach((offset) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(1046.5, now + offset); // High C
+            gain.gain.setValueAtTime(volume, now + offset);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.08);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + offset);
+            osc.stop(now + offset + 0.09);
+          });
+        } catch(e) {}
+      }
+
+      beepBeep();
+      alarmOscInterval = setInterval(beepBeep, 1200);
+    }
+
+    function stopAlarmSound() {
+      state.alarmAudioActive = false;
+      if (alarmOscInterval) {
+        clearInterval(alarmOscInterval);
+        alarmOscInterval = null;
+      }
+    }
+
+    const dialTicksContainer = document.getElementById('dial-ticks-container');
+    function generateDialTicks() {
+      dialTicksContainer.innerHTML = '';
+      const radius = 94; // base coordinate scale inside 200x200
+      
+      for (let i = 0; i < 60; i++) {
+        const isMajor = i % 5 === 0;
+        const angleDeg = i * 6; // 360 / 60 = 6 deg
+        const angleRad = (angleDeg - 90) * (Math.PI / 180);
+
+        // Tick mark outer / inner positions (in percent)
+        const outerPercent = 94;
+        const innerPercent = isMajor ? 82 : 87;
+
+        // Position tick elements
+        const tick = document.createElement('div');
+        tick.className = `absolute ${isMajor ? 'w-[2px] bg-stone-700' : 'w-[1px] bg-stone-400'}`;
+        tick.style.height = isMajor ? '8px' : '4px';
+        tick.style.left = '50%';
+        tick.style.top = '50%';
+        tick.style.transformOrigin = 'center top';
+        tick.style.transform = `rotate(${angleDeg}deg) translateY(-${isMajor ? 122 : 124}px) translateX(-50%)`;
+        dialTicksContainer.appendChild(tick);
+
+        // Add numerical digits for 0, 5, 10, ..., 55
+        if (isMajor) {
+          const numLabel = document.createElement('span');
+          numLabel.className = 'absolute text-stone-800 font-extrabold text-[11px] sm:text-[13px] tracking-tight transform -translate-x-1/2 -translate-y-1/2 select-none pointer-events-none';
+          numLabel.textContent = i;
+          
+          // Geometry for text layout inside ticks
+          const distancePercent = 38; // Distance from center percentage
+          const x = 50 + distancePercent * Math.cos(angleRad);
+          const y = 50 + distancePercent * Math.sin(angleRad);
+          
+          numLabel.style.left = `${x}%`;
+          numLabel.style.top = `${y}%`;
+          dialTicksContainer.appendChild(numLabel);
+        }
+      }
+    }
+    generateDialTicks();
+
+    const pieSlice = document.getElementById('pie-slice');
+    const knobHandle = document.getElementById('knob-handle');
+    const digitalDisplay = document.getElementById('digital-time-display');
+    const statusLed = document.getElementById('status-led');
+    const statusLedText = document.getElementById('status-led-text');
+
+    function updateVisualDisplay(seconds) {
+      const maxSeconds = 3600;
+      const clamped = Math.max(0, Math.min(seconds, maxSeconds));
+      const fraction = clamped / maxSeconds;
+      const angleDeg = fraction * 360;
+
+      // Update knob rotation
+      knobHandle.style.transform = `rotate(${angleDeg}deg)`;
+
+      // Format digital timer string MM:SS
+      const m = Math.floor(clamped / 60);
+      const s = Math.floor(clamped % 60);
+      digitalDisplay.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+
+      // Update SVG pie sector (Starts at 12 o'clock, which is top, rotates clockwise)
+      const cx = 100;
+      const cy = 100;
+      const r = 94;
+
+      if (fraction <= 0) {
+        pieSlice.setAttribute('d', 'M 100 100 Z');
+        return;
+      }
+
+      if (fraction >= 0.9999) {
+        // Full circle
+        pieSlice.setAttribute('d', `M ${cx - r} ${cy} A ${r} ${r} 0 1 0 ${cx + r} ${cy} A ${r} ${r} 0 1 0 ${cx - r} ${cy} Z`);
+        return;
+      }
+
+      // Convert angle for SVG coordinate system (svg is rotated -90deg, so 0deg is along +X in local, matching top)
+      const rad = (angleDeg * Math.PI) / 180;
+      const endX = cx + r * Math.cos(rad);
+      const endY = cy + r * Math.sin(rad);
+      const largeArc = angleDeg > 180 ? 1 : 0;
+
+      const pathData = `M ${cx} ${cy} L ${cx + r} ${cy} A ${r} ${r} 0 ${largeArc} 1 ${endX} ${endY} Z`;
+      pieSlice.setAttribute('d', pathData);
+    }
+
+    function setLEDState(mode) {
+      statusLed.className = 'w-2.5 h-2.5 rounded-full transition-all duration-300';
+      if (mode === 'running') {
+        statusLed.classList.add('led-green-on');
+        statusLedText.textContent = '작동중';
+      } else if (mode === 'paused') {
+        statusLed.classList.add('led-green-on', 'led-blinking');
+        statusLedText.textContent = '일시정지';
+      } else if (mode === 'alarm') {
+        statusLed.classList.add('led-fast-blinking');
+        statusLedText.textContent = '시간 종료';
+      } else {
+        statusLed.classList.add('led-off');
+        statusLedText.textContent = '대기';
+      }
+    }
+
+    function startCountdown() {
+      if (state.remainingSeconds <= 0) return;
+      
+      clearInterval(state.countdownIntervalId);
+      state.isRunning = true;
+      state.isPaused = false;
+      setLEDState('running');
+      getAudioContext();
+
+      state.countdownIntervalId = setInterval(() => {
+        if (state.remainingSeconds > 0) {
+          state.remainingSeconds--;
+          updateVisualDisplay(state.remainingSeconds);
+          playMechanicalTick();
+
+          if (state.remainingSeconds <= 0) {
+            triggerTimerEnd();
+          }
+        }
+      }, 1000);
+    }
+
+    function pauseCountdown() {
+      if (!state.isRunning) return;
+      clearInterval(state.countdownIntervalId);
+      state.isRunning = false;
+      state.isPaused = true;
+      setLEDState('paused');
+    }
+
+    function resumeCountdown() {
+      if (state.remainingSeconds <= 0) return;
+      startCountdown();
+    }
+
+    function togglePauseResume() {
+      getAudioContext();
+      if (state.isRunning) {
+        pauseCountdown();
+      } else if (state.isPaused) {
+        resumeCountdown();
+      } else if (state.remainingSeconds > 0) {
+        startCountdown();
+      }
+    }
+
+    function resetTimer() {
+      clearTimeout(state.autoStartTimerId);
+      clearInterval(state.countdownIntervalId);
+      stopAlarmSound();
+      state.isRunning = false;
+      state.isPaused = false;
+      state.totalSeconds = 0;
+      state.remainingSeconds = 0;
+      updateVisualDisplay(0);
+      setLEDState('off');
+      document.getElementById('alarm-modal').classList.add('hidden');
+    }
+
+    function triggerTimerEnd() {
+      clearInterval(state.countdownIntervalId);
+      state.isRunning = false;
+      state.isPaused = false;
+      setLEDState('alarm');
+      startAlarmSound();
+      document.getElementById('alarm-modal').classList.remove('hidden');
+    }
+
+    // Schedule auto start after user releases knob (STEP 03)
+    function scheduleAutoStart() {
+      clearTimeout(state.autoStartTimerId);
+      if (state.remainingSeconds > 0) {
+        state.autoStartTimerId = setTimeout(() => {
+          startCountdown();
+        }, 600); // Natural 0.6s physical dial settle delay
+      }
+    }
+
+    const interactiveZone = document.getElementById('dial-interactive-zone');
+    let lastClickSecond = 0;
+
+    function handleDialPointerEvent(e) {
+      const rect = interactiveZone.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      const deltaX = clientX - centerX;
+      const deltaY = clientY - centerY;
+
+      // Calculate angle from 12 o'clock (0deg at top, increasing clockwise)
+      let deg = Math.atan2(deltaY, deltaX) * (180 / Math.PI) + 90;
+      if (deg < 0) deg += 360;
+
+      // Convert angle to minutes (0 to 60)
+      const minutes = (deg / 360) * 60;
+      // Snap to nearest 30 seconds for crisp mechanical feeling
+      const roundedSeconds = Math.round((minutes * 60) / 30) * 30;
+
+      if (Math.abs(roundedSeconds - lastClickSecond) >= 60) {
+        playDialClick();
+        lastClickSecond = roundedSeconds;
+      }
+
+      state.remainingSeconds = roundedSeconds;
+      state.totalSeconds = roundedSeconds;
+      updateVisualDisplay(state.remainingSeconds);
+    }
+
+    function onPointerDown(e) {
+      e.preventDefault();
+      getAudioContext();
+      clearTimeout(state.autoStartTimerId);
+      clearInterval(state.countdownIntervalId);
+      stopAlarmSound();
+      document.getElementById('alarm-modal').classList.add('hidden');
+      
+      state.isDragging = true;
+      state.isRunning = false;
+      state.isPaused = false;
+      setLEDState('off');
+      
+      handleDialPointerEvent(e);
+      window.addEventListener('mousemove', onPointerMove);
+      window.addEventListener('mouseup', onPointerUp);
+      window.addEventListener('touchmove', onPointerMove, { passive: false });
+      window.addEventListener('touchend', onPointerUp);
+    }
+
+    function onPointerMove(e) {
+      if (!state.isDragging) return;
+      e.preventDefault();
+      handleDialPointerEvent(e);
+    }
+
+    function onPointerUp(e) {
+      if (!state.isDragging) return;
+      state.isDragging = false;
+      window.removeEventListener('mousemove', onPointerMove);
+      window.removeEventListener('mouseup', onPointerUp);
+      window.removeEventListener('touchmove', onPointerMove);
+      window.removeEventListener('touchend', onPointerUp);
+
+      // STEP 03: Automatic start upon release
+      scheduleAutoStart();
+    }
+
+    interactiveZone.addEventListener('mousedown', onPointerDown);
+    interactiveZone.addEventListener('touchstart', onPointerDown, { passive: false });
+
+    // Physical Top Button (STEP 04)
+    const topBtn = document.getElementById('physical-top-btn');
+    topBtn.addEventListener('click', () => {
+      topBtn.classList.add('pressed');
+      setTimeout(() => topBtn.classList.remove('pressed'), 150);
+      togglePauseResume();
+    });
+
+    // Keyboard spacebar shortcut
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        topBtn.classList.add('pressed');
+        setTimeout(() => topBtn.classList.remove('pressed'), 150);
+        togglePauseResume();
+      } else if (e.key === 'r' || e.key === 'R') {
+        resetTimer();
+      }
+    });
+
+    // Preset Buttons
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        getAudioContext();
+        clearTimeout(state.autoStartTimerId);
+        clearInterval(state.countdownIntervalId);
+        stopAlarmSound();
+        document.getElementById('alarm-modal').classList.add('hidden');
+
+        const mins = parseInt(btn.dataset.mins, 10);
+        state.remainingSeconds = mins * 60;
+        state.totalSeconds = state.remainingSeconds;
+        updateVisualDisplay(state.remainingSeconds);
+        playDialClick();
+        scheduleAutoStart();
+      });
+    });
+
+    // Reset Button
+    document.getElementById('reset-btn').addEventListener('click', () => {
+      getAudioContext();
+      resetTimer();
+    });
+
+    // Alarm modal stop button
+    document.getElementById('stop-alarm-btn').addEventListener('click', () => {
+      stopAlarmSound();
+      document.getElementById('alarm-modal').classList.add('hidden');
+      resetTimer();
+    });
+
+    // STEP 05: Audio Mode Switch
+    const soundModeBtns = document.querySelectorAll('.sound-mode-btn');
+    const soundModeDesc = document.getElementById('sound-mode-desc');
+
+    const soundModeDescriptions = {
+      silent: '무음: 완료 시 소리 없이 LED 및 화면만 깜빡임',
+      low: '저음: 종료 시 부드럽고 맑은 디지털 알람음',
+      high: '고음: 멀리서도 또렷하게 들리는 강력한 비프음'
+    };
+
+    soundModeBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        getAudioContext();
+        const mode = btn.dataset.mode;
+        state.soundMode = mode;
+
+        soundModeBtns.forEach(b => {
+          b.className = 'sound-mode-btn flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-600 hover:text-stone-900 transition';
+        });
+        btn.className = 'sound-mode-btn flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-stone-900 shadow-xs transition';
+
+        soundModeDesc.textContent = soundModeDescriptions[mode];
+
+        // Sample test audio for feedback when choosing mode
+        if (mode !== 'silent') {
+          playDialClick();
+        }
+      });
+    });
+
+    // Tick audio toggle
+    const tickToggleBtn = document.getElementById('tick-toggle-btn');
+    const soundIconOn = document.getElementById('sound-icon-on');
+    const soundIconOff = document.getElementById('sound-icon-off');
+    tickToggleBtn.addEventListener('click', () => {
+      getAudioContext();
+      state.tickSound = !state.tickSound;
+      if (state.tickSound) {
+        soundIconOn.classList.remove('hidden');
+        soundIconOff.classList.add('hidden');
+      } else {
+        soundIconOn.classList.add('hidden');
+        soundIconOff.classList.remove('hidden');
+      }
+    });
+
+    // Fullscreen Toggle
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+    fullscreenBtn.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    });
+
+    // Guide Modal
+    const guideModal = document.getElementById('guide-modal');
+    document.getElementById('guide-open-btn').addEventListener('click', () => {
+      guideModal.classList.remove('hidden');
+    });
+    document.getElementById('guide-close-btn').addEventListener('click', () => {
+      guideModal.classList.add('hidden');
+    });
+    document.getElementById('guide-confirm-btn').addEventListener('click', () => {
+      guideModal.classList.add('hidden');
+    });
+
+    // Initialize Default State
+    updateVisualDisplay(0);
+    setLEDState('off');
+  </script>
+</body>
+</html>
