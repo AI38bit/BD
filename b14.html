@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사대천왕 수호 사주 만세력 · 오늘의 운세</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700;900&family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --color-dan-red: #B82C23;       /* 석간주 / 주홍 */
+            --color-dan-green: #17584A;     /* 하엽 / 뇌록 */
+            --color-dan-blue: #144473;      /* 청벽 */
+            --color-dan-yellow: #E2A028;    /* 황단 / 금분 */
+            --color-wood: #2D6A4F;
+            --color-fire: #C84630;
+            --color-earth: #A37D35;
+            --color-metal: #858D95;
+            --color-water: #1C3144;
+            --bg-dark: #0A0910;
+            --gold-accent: #E5B454;
+            --primary-blue: #1A68FF;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, sans-serif;
+            background-color: var(--bg-dark);
+            color: #EAE6DF;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .temple-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+            background: radial-gradient(circle at center, #1C1628 0%, #0E0B16 65%, #050409 100%);
+        }
+
+        .dancheong-border-top,
+        .dancheong-border-bottom {
+            position: fixed;
+            left: 0;
+            width: 100%;
+            height: 24px;
+            background: repeating-linear-gradient(90deg,
+                var(--color-dan-red) 0px, var(--color-dan-red) 35px,
+                var(--color-dan-yellow) 35px, var(--color-dan-yellow) 50px,
+                var(--color-dan-green) 50px, var(--color-dan-green) 85px,
+                var(--color-dan-blue) 85px, var(--color-dan-blue) 120px
+            );
+            box-shadow: 0 0 25px rgba(226, 160, 40, 0.45);
+            z-index: 50;
+        }
+        .dancheong-border-top { top: 0; border-bottom: 2px solid var(--gold-accent); }
+        .dancheong-border-bottom { bottom: 0; border-top: 2px solid var(--gold-accent); }
+
+        .guardian-flank {
+            position: fixed;
+            top: 72px;
+            bottom: 34px;
+            width: 255px;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            pointer-events: auto;
+        }
+        .guardian-flank-left { left: 16px; }
+        .guardian-flank-right { right: 16px; }
+
+        .deva-photo-card {
+            flex: 1;
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1.5px solid rgba(229, 180, 84, 0.55);
+            background: #08060D;
+            box-shadow: 0 10px 28px rgba(0,0,0,0.85), inset 0 0 15px rgba(0,0,0,0.7);
+            transition: all 0.3s ease;
+        }
+        .deva-photo-card:hover {
+            border-color: var(--gold-accent);
+            transform: scale(1.02);
+            box-shadow: 0 14px 35px rgba(229, 180, 84, 0.35);
+        }
+
+        .photo-crop-box {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            background-color: #121019;
+        }
+
+        .photo-crop-box img.deva-img {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            object-fit: cover;
+            display: block;
+            filter: contrast(1.06) brightness(0.96);
+            transition: filter 0.3s ease;
+        }
+        .deva-photo-card:hover .photo-crop-box img.deva-img {
+            filter: contrast(1.1) brightness(1.03);
+        }
+
+        .crop-south { top: 0%; left: 0%; }
+        .crop-north { top: -100%; left: 0%; }
+        .crop-west { top: 0%; left: -100%; }
+        .crop-east { top: -100%; left: -100%; }
+
+        .fallback-art {
+            position: absolute;
+            inset: 0;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle, #251B12 0%, #0D0806 100%);
+            color: #C5BAA5;
+            padding: 10px;
+            text-align: center;
+        }
+        .fallback-art svg {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 8px;
+            fill: var(--gold-accent);
+            opacity: 0.85;
+        }
+        .fallback-art span {
+            font-size: 13px;
+            color: #D4C5AB;
+            font-weight: 600;
+        }
+
+        .deva-caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(0deg, rgba(8, 6, 14, 0.96) 0%, rgba(8, 6, 14, 0.78) 70%, transparent 100%);
+            padding: 10px 12px 8px;
+            border-top: 1px solid rgba(229, 180, 84, 0.3);
+            backdrop-filter: blur(4px);
+            z-index: 5;
+        }
+        .deva-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2px;
+        }
+        .deva-name {
+            font-family: 'Noto Serif KR', serif;
+            font-size: 14px;
+            font-weight: 800;
+            color: #FFE6A8;
+        }
+        .deva-direction {
+            font-size: 10.5px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #FFF;
+        }
+        .deva-weapon {
+            font-size: 11.5px;
+            color: #C2BBB0;
+        }
+
+        .tag-south { background: var(--color-dan-red); }
+        .tag-west { background: #C2851D; }
+        .tag-north { background: var(--color-dan-blue); }
+        .tag-east { background: var(--color-dan-green); }
+
+        .main-viewport {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 42px 295px 60px;
+        }
+
+        .app-wrapper {
+            width: 100%;
+            max-width: 820px;
+            background: rgba(18, 16, 26, 0.94);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(229, 180, 84, 0.4);
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), inset 0 0 30px rgba(229, 180, 84, 0.05);
+            padding: 34px 34px 44px;
+        }
+
+        .temple-header {
+            text-align: center;
+            margin-bottom: 24px;
+            position: relative;
+            padding-bottom: 18px;
+            border-bottom: 1px solid rgba(229, 180, 84, 0.25);
+        }
+        .temple-header h1 {
+            font-family: 'Noto Serif KR', serif;
+            font-size: 26px;
+            letter-spacing: 1.5px;
+            color: #FFF4D9;
+            text-shadow: 0 0 15px rgba(229, 180, 84, 0.6);
+            font-weight: 800;
+        }
+        .temple-header .sub-quote {
+            margin-top: 8px;
+            font-size: 13.5px;
+            color: #BDB5A4;
+            letter-spacing: 0.5px;
+        }
+
+        .section-title-wrap {
+            margin-bottom: 18px;
+        }
+        .section-title {
+            font-size: 19px;
+            font-weight: 700;
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+        .section-title::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 19px;
+            background: var(--color-dan-yellow);
+            border-radius: 2px;
+        }
+        .section-desc {
+            font-size: 13.5px;
+            color: #9C968B;
+            padding-left: 14px;
+        }
+
+        .form-container {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            background: rgba(10, 9, 16, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 24px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 130px 1fr;
+            align-items: center;
+            gap: 16px;
+        }
+        .form-label {
+            font-size: 15px;
+            font-weight: 600;
+            color: #ECE7DF;
+        }
+
+        select, input {
+            height: 44px;
+            background: rgba(26, 24, 38, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 6px;
+            color: #FFFFFF;
+            padding: 0 14px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+        select:hover, input:hover {
+            border-color: rgba(229, 180, 84, 0.6);
+        }
+        select:focus, input:focus {
+            border-color: var(--gold-accent);
+            box-shadow: 0 0 0 2px rgba(229, 180, 84, 0.25);
+        }
+        select option {
+            background: #181622;
+            color: #FFF;
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.85) sepia(50%) saturate(500%) hue-rotate(5deg);
+            cursor: pointer;
+            padding-left: 4px;
+        }
+
+        .date-grid {
+            display: grid;
+            grid-template-columns: 110px 1fr 1fr 1fr;
+            gap: 8px;
+        }
+
+        .target-date-picker-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .target-date-input {
+            max-width: 220px;
+            cursor: pointer;
+            color-scheme: dark;
+        }
+
+        .quick-day-btn {
+            height: 44px;
+            padding: 0 16px;
+            background: rgba(25, 22, 36, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 6px;
+            color: #C5BFB5;
+            font-size: 13.5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .quick-day-btn:hover {
+            border-color: var(--gold-accent);
+            color: #FFF;
+            background: rgba(45, 38, 60, 0.8);
+        }
+        .quick-day-btn.active {
+            border-color: var(--gold-accent);
+            background: linear-gradient(135deg, rgba(229, 180, 84, 0.2) 0%, rgba(26, 104, 255, 0.3) 100%);
+            color: var(--gold-accent);
+            font-weight: 600;
+        }
+
+        .school-options-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .school-card-label {
+            position: relative;
+            cursor: pointer;
+            user-select: none;
+        }
+        .school-card-label input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .school-card-box {
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: rgba(25, 22, 36, 0.7);
+            border-radius: 8px;
+            padding: 12px 8px;
+            text-align: center;
+            transition: all 0.25s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .school-name {
+            font-size: 14.5px;
+            font-weight: 700;
+            color: #DDD;
+        }
+        .school-sub {
+            font-size: 11.5px;
+            color: #938E84;
+        }
+        .school-card-label:hover .school-card-box {
+            border-color: rgba(229, 180, 84, 0.5);
+            background: rgba(35, 30, 48, 0.85);
+        }
+        .school-card-label input[type="radio"]:checked + .school-card-box {
+            border-color: var(--gold-accent);
+            background: linear-gradient(135deg, rgba(229, 180, 84, 0.2) 0%, rgba(184, 44, 35, 0.25) 100%);
+            box-shadow: 0 0 16px rgba(229, 180, 84, 0.35);
+        }
+        .school-card-label input[type="radio"]:checked + .school-card-box .school-name {
+            color: var(--gold-accent);
+        }
+        .school-card-label input[type="radio"]:checked + .school-card-box .school-sub {
+            color: #E2D9C8;
+        }
+
+        .submit-wrap {
+            margin-top: 26px;
+            display: flex;
+            justify-content: center;
+        }
+        .btn-submit {
+            background: var(--primary-blue);
+            color: #FFFFFF;
+            font-size: 17px;
+            font-weight: 700;
+            padding: 13px 68px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 18px rgba(26, 104, 255, 0.45);
+            letter-spacing: 0.5px;
+        }
+        .btn-submit:hover {
+            background: #0D56E8;
+            transform: translateY(-1.5px);
+            box-shadow: 0 6px 22px rgba(26, 104, 255, 0.6);
+        }
+
+        .reading-loader {
+            display: none;
+            margin-top: 35px;
+            text-align: center;
+            padding: 30px;
+        }
+        .loader-ring {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(229, 180, 84, 0.2);
+            border-top-color: var(--gold-accent);
+            border-radius: 50%;
+            margin: 0 auto 14px;
+            animation: spinRing 0.9s infinite linear;
+        }
+        @keyframes spinRing {
+            to { transform: rotate(360deg); }
+        }
+        .loader-text {
+            color: var(--gold-accent);
+            font-size: 14.5px;
+            font-weight: 600;
+        }
+
+        .result-view {
+            display: none;
+            margin-top: 36px;
+            animation: fadeIn 0.6s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(14px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .saju-board {
+            background: rgba(14, 12, 22, 0.95);
+            border: 1px solid rgba(229, 180, 84, 0.4);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .saju-board-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--gold-accent);
+            margin-bottom: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .pillars-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            text-align: center;
+        }
+        .pillar-col {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            padding: 12px 6px;
+        }
+        .pillar-col-head {
+            font-size: 12px;
+            color: #9E998E;
+            margin-bottom: 8px;
+        }
+        .character-box {
+            font-family: 'Noto Serif KR', serif;
+            font-size: 21px;
+            font-weight: 800;
+            width: 44px;
+            height: 44px;
+            margin: 4px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+        }
+        .elem-wood { background: var(--color-wood); color: #FFF; }
+        .elem-fire { background: var(--color-fire); color: #FFF; }
+        .elem-earth { background: var(--color-earth); color: #FFF; }
+        .elem-metal { background: var(--color-metal); color: #111; }
+        .elem-water { background: var(--color-water); color: #FFF; }
+
+        .school-interpretation-card {
+            border: 1px solid var(--gold-accent);
+            background: linear-gradient(180deg, rgba(30, 24, 40, 0.95) 0%, rgba(18, 15, 26, 0.98) 100%);
+            border-radius: 10px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+        }
+        .badge-school {
+            display: inline-block;
+            background: var(--color-dan-red);
+            color: #FFF;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 4px;
+            margin-bottom: 12px;
+        }
+        .school-quote-title {
+            font-family: 'Noto Serif KR', serif;
+            font-size: 19px;
+            color: #FFE6A8;
+            font-weight: 800;
+            margin-bottom: 12px;
+            line-height: 1.45;
+        }
+        .school-theory-principle {
+            background: rgba(0, 0, 0, 0.35);
+            border-left: 3px solid var(--gold-accent);
+            padding: 10px 14px;
+            font-size: 13px;
+            color: #C8C1B3;
+            margin-bottom: 14px;
+            line-height: 1.55;
+        }
+        .school-main-text {
+            font-size: 14.5px;
+            line-height: 1.8;
+            color: #EDE8DE;
+            word-break: keep-all;
+        }
+
+        .guardian-readings-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+            margin-bottom: 22px;
+        }
+        .guardian-card {
+            background: rgba(19, 16, 28, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+        .guardian-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+        }
+        .card-wealth::before { background: #32B394; }
+        .card-work::before { background: #FF4E3E; }
+        .card-love::before { background: #E5B454; }
+        .card-health::before { background: #3E8BFF; }
+
+        .guardian-card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .guardian-card-head .guardian-name {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: var(--gold-accent);
+        }
+        .guardian-card-head .topic-badge {
+            font-size: 11.5px;
+            padding: 2px 7px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 4px;
+            color: #FFF;
+        }
+        .guardian-card p {
+            font-size: 13px;
+            line-height: 1.6;
+            color: #CCC6BA;
+            word-break: keep-all;
+        }
+
+        .remedy-banner {
+            background: rgba(229, 180, 84, 0.08);
+            border: 1px dashed var(--gold-accent);
+            border-radius: 8px;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 13px;
+        }
+        .remedy-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .remedy-item strong {
+            color: var(--gold-accent);
+        }
+
+        @media (max-width: 1400px) {
+            .guardian-flank { width: 200px; }
+            .main-viewport { padding: 40px 230px 60px; }
+        }
+        @media (max-width: 1120px) {
+            .guardian-flank { display: none; }
+            .main-viewport { padding: 30px 16px 50px; }
+        }
+        @media (max-width: 680px) {
+            .app-wrapper { padding: 22px 16px; }
+            .form-row { grid-template-columns: 1fr; gap: 8px; }
+            .date-grid { grid-template-columns: 1fr 1fr; }
+            .school-options-grid { grid-template-columns: 1fr; }
+            .guardian-readings-grid { grid-template-columns: 1fr; }
+            .target-date-input { max-width: 100%; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="temple-bg"></div>
+    <div class="dancheong-border-top"></div>
+    <div class="dancheong-border-bottom"></div>
+
+    <!-- 좌측 수호 패널 -->
+    <aside class="guardian-flank guardian-flank-left" aria-label="좌측 사대천왕 수호 패널">
+        <div class="deva-photo-card" title="남방 증장천왕">
+            <div class="photo-crop-box">
+                <img src="sa.jpg" alt="남방 증장천왕" class="deva-img crop-south" onerror="handleImageError(this)">
+                <div class="fallback-art">
+                    <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    <span>남방 증장천왕</span>
+                </div>
+            </div>
+            <div class="deva-caption">
+                <div class="deva-title-row">
+                    <span class="deva-name">남방 증장천왕</span>
+                    <span class="deva-direction tag-south">남방 · 火</span>
+                </div>
+                <span class="deva-weapon">용천보검 (지혜와 번영)</span>
+            </div>
+        </div>
+
+        <div class="deva-photo-card" title="북방 다문천왕">
+            <div class="photo-crop-box">
+                <img src="sa.jpg" alt="북방 다문천왕" class="deva-img crop-north" onerror="handleImageError(this)">
+                <div class="fallback-art">
+                    <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    <span>북방 다문천왕</span>
+                </div>
+            </div>
+            <div class="deva-caption">
+                <div class="deva-title-row">
+                    <span class="deva-name">북방 다문천왕</span>
+                    <span class="deva-direction tag-north">북방 · 水</span>
+                </div>
+                <span class="deva-weapon">황금보탑 (복덕과 재물)</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- 우측 수호 패널 -->
+    <aside class="guardian-flank guardian-flank-right" aria-label="우측 사대천왕 수호 패널">
+        <div class="deva-photo-card" title="서방 광목천왕">
+            <div class="photo-crop-box">
+                <img src="sa.jpg" alt="서방 광목천왕" class="deva-img crop-west" onerror="handleImageError(this)">
+                <div class="fallback-art">
+                    <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    <span>서방 광목천왕</span>
+                </div>
+            </div>
+            <div class="deva-caption">
+                <div class="deva-title-row">
+                    <span class="deva-name">서방 광목천왕</span>
+                    <span class="deva-direction tag-west">서방 · 金</span>
+                </div>
+                <span class="deva-weapon">신룡 & 여의주 (통찰·벽사)</span>
+            </div>
+        </div>
+
+        <div class="deva-photo-card" title="동방 지국천왕">
+            <div class="photo-crop-box">
+                <img src="sa.jpg" alt="동방 지국천왕" class="deva-img crop-east" onerror="handleImageError(this)">
+                <div class="fallback-art">
+                    <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    <span>동방 지국천왕</span>
+                </div>
+            </div>
+            <div class="deva-caption">
+                <div class="deva-title-row">
+                    <span class="deva-name">동방 지국천왕</span>
+                    <span class="deva-direction tag-east">동방 · 木</span>
+                </div>
+                <span class="deva-weapon">조화의 비파 (화평과 안녕)</span>
+            </div>
+        </div>
+    </aside>
+
+    <div class="main-viewport">
+        <main class="app-wrapper">
+            <header class="temple-header">
+                <h1>사대천왕 수호 사주 만세력</h1>
+                <p class="sub-quote">불교 사대천왕의 수호와 단청 오방색으로 풀이하는 정통 학파별 일진비결</p>
+            </header>
+
+            <!-- 사용자 입력 폼 -->
+            <section>
+                <div class="section-title-wrap">
+                    <h2 class="section-title">개인정보입력</h2>
+                    <p class="section-desc">정확한 사주 분석을 위해 실제 생일정보를 입력하여 주시기 바랍니다.</p>
+                </div>
+
+                <form id="sajuForm" class="form-container" onsubmit="event.preventDefault(); readFortune();">
+                    
+                    <div class="form-row">
+                        <label class="form-label" for="genderSelect">성별</label>
+                        <div>
+                            <select id="genderSelect" style="width: 100%; max-width: 260px;" required>
+                                <option value="">선택</option>
+                                <option value="M" selected>남성</option>
+                                <option value="F">여성</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <label class="form-label">생년월일</label>
+                        <div class="date-grid">
+                            <select id="calType">
+                                <option value="solar" selected>양력</option>
+                                <option value="lunar">음력</option>
+                            </select>
+                            <select id="birthYear" required></select>
+                            <select id="birthMonth" required></select>
+                            <select id="birthDay" required></select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <label class="form-label" for="birthHour">태어난 시간</label>
+                        <div>
+                            <select id="birthHour" style="width: 100%; max-width: 260px;" required>
+                                <option value="">선택</option>
+                                <option value="0">자시 (23:30 ~ 01:29)</option>
+                                <option value="1">축시 (01:30 ~ 03:29)</option>
+                                <option value="2">인시 (03:30 ~ 05:29)</option>
+                                <option value="3">묘시 (05:30 ~ 07:29)</option>
+                                <option value="4">진시 (07:30 ~ 09:29)</option>
+                                <option value="5">사시 (09:30 ~ 11:29)</option>
+                                <option value="6" selected>오시 (11:30 ~ 13:29)</option>
+                                <option value="7">미시 (13:30 ~ 15:29)</option>
+                                <option value="8">신시 (15:30 ~ 17:29)</option>
+                                <option value="9">유시 (17:30 ~ 19:29)</option>
+                                <option value="10">술시 (19:30 ~ 21:29)</option>
+                                <option value="11">해시 (21:30 ~ 23:29)</option>
+                                <option value="-1">시간 모름</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <label class="form-label">명리학파 선택</label>
+                        <div class="school-options-grid">
+                            <label class="school-card-label">
+                                <input type="radio" name="sajuSchool" value="gyeokguk" checked>
+                                <div class="school-card-box">
+                                    <span class="school-name">격국론 (格局論)</span>
+                                    <span class="school-sub">월령 용신 · 성패구응</span>
+                                </div>
+                            </label>
+                            <label class="school-card-label">
+                                <input type="radio" name="sajuSchool" value="mulsang">
+                                <div class="school-card-box">
+                                    <span class="school-name">물상론 (物象論)</span>
+                                    <span class="school-sub">자연 계절 · 수화기제</span>
+                                </div>
+                            </label>
+                            <label class="school-card-label">
+                                <input type="radio" name="sajuSchool" value="maengpa">
+                                <div class="school-card-box">
+                                    <span class="school-name">맹파명리 (盲派)</span>
+                                    <span class="school-sub">주공(做功) · 포국 세력</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 해당일 선택 달력 피커 -->
+                    <div class="form-row">
+                        <label class="form-label" for="targetDate">해당일 선택</label>
+                        <div class="target-date-picker-wrap">
+                            <input type="date" id="targetDate" class="target-date-input" required>
+                            <button type="button" class="quick-day-btn active" id="btnQuickToday" onclick="setQuickDate(0)">오늘</button>
+                            <button type="button" class="quick-day-btn" id="btnQuickTomorrow" onclick="setQuickDate(1)">내일</button>
+                        </div>
+                    </div>
+
+                    <div class="submit-wrap">
+                        <button type="submit" class="btn-submit">운세보기</button>
+                    </div>
+                </form>
+            </section>
+
+            <div id="loadingIndicator" class="reading-loader">
+                <div class="loader-ring"></div>
+                <p class="loader-text">사대천왕의 수호 기운을 받아 해당일 일진과 만세력을 감응 중입니다...</p>
+            </div>
+
+            <!-- 운세 결과 출력 화면 -->
+            <section id="resultSection" class="result-view">
+                <div class="saju-board">
+                    <div class="saju-board-title">
+                        <span>사주팔자 만세력 원국 (四柱八字)</span>
+                        <span id="targetDateBadge" style="color: var(--gold-accent); font-size: 13.5px; font-weight: 600;"></span>
+                    </div>
+                    <div class="pillars-grid">
+                        <div class="pillar-col">
+                            <div class="pillar-col-head">시주 (時柱)</div>
+                            <div id="timeGan" class="character-box elem-fire">丙</div>
+                            <div id="timeJi" class="character-box elem-fire">午</div>
+                        </div>
+                        <div class="pillar-col">
+                            <div class="pillar-col-head">일주 (日柱) · 나</div>
+                            <div id="dayGan" class="character-box elem-wood">甲</div>
+                            <div id="dayJi" class="character-box elem-wood">寅</div>
+                        </div>
+                        <div class="pillar-col">
+                            <div class="pillar-col-head">월주 (月柱)</div>
+                            <div id="monthGan" class="character-box elem-metal">辛</div>
+                            <div id="monthJi" class="character-box elem-metal">酉</div>
+                        </div>
+                        <div class="pillar-col">
+                            <div class="pillar-col-head">년주 (年柱)</div>
+                            <div id="yearGan" class="character-box elem-fire">丙</div>
+                            <div id="yearJi" class="character-box elem-fire">午</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="school-interpretation-card">
+                    <div id="schoolBadge" class="badge-school">격국론(格局論) 관법 풀이</div>
+                    <h3 id="schoolHeadline" class="school-quote-title"></h3>
+                    <div id="schoolTheory" class="school-theory-principle">
+                        <strong>학파 핵심 원리:</strong> 월령(月令)과 일진의 십신(十神) 상호작용 및 생극제화로 길흉과 성패를 판별합니다.
+                    </div>
+                    <p id="schoolContent" class="school-main-text"></p>
+                </div>
+
+                <div class="guardian-readings-grid">
+                    <div class="guardian-card card-wealth">
+                        <div class="guardian-card-head">
+                            <span class="guardian-name">동방 지국천왕 (비파)</span>
+                            <span class="topic-badge">재물운</span>
+                        </div>
+                        <p id="wealthFortune"></p>
+                    </div>
+
+                    <div class="guardian-card card-work">
+                        <div class="guardian-card-head">
+                            <span class="guardian-name">남방 증장천왕 (보검)</span>
+                            <span class="topic-badge">직업·학업운</span>
+                        </div>
+                        <p id="workFortune"></p>
+                    </div>
+
+                    <div class="guardian-card card-love">
+                        <div class="guardian-card-head">
+                            <span class="guardian-name">서방 광목천왕 (용·여의주)</span>
+                            <span class="topic-badge">인연·애정운</span>
+                        </div>
+                        <p id="loveFortune"></p>
+                    </div>
+
+                    <div class="guardian-card card-health">
+                        <div class="guardian-card-head">
+                            <span class="guardian-name">북방 다문천왕 (보탑)</span>
+                            <span class="topic-badge">건강·수호운</span>
+                        </div>
+                        <p id="healthFortune"></p>
+                    </div>
+                </div>
+
+                <div class="remedy-banner">
+                    <div class="remedy-item">
+                        <strong>수호 단청색:</strong>
+                        <span id="luckyColor">청벽색 & 황단색</span>
+                    </div>
+                    <div class="remedy-item">
+                        <strong>길한 방위:</strong>
+                        <span id="luckyDir">동남방 (東南方)</span>
+                    </div>
+                    <div class="remedy-item">
+                        <strong>행운의 숫자:</strong>
+                        <span id="luckyNum">3, 8</span>
+                    </div>
+                    <div class="remedy-item">
+                        <strong>오늘의 화두:</strong>
+                        <span id="mindWord">유지경성(有志竟成)</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        function handleImageError(img) {
+            img.style.display = 'none';
+            const fallback = img.nextElementSibling;
+            if (fallback && fallback.classList.contains('fallback-art')) {
+                fallback.style.display = 'flex';
+            }
+        }
+
+        const HEAVENLY_STEMS = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+        const EARTHLY_BRANCHES = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+        
+        const STEM_ELEMENTS = {
+            '甲': 'wood', '乙': 'wood',
+            '丙': 'fire', '丁': 'fire',
+            '戊': 'earth', '己': 'earth',
+            '庚': 'metal', '辛': 'metal',
+            '壬': 'water', '癸': 'water'
+        };
+        const BRANCH_ELEMENTS = {
+            '子': 'water', '丑': 'earth', '寅': 'wood', '卯': 'wood',
+            '辰': 'earth', '巳': 'fire', '午': 'fire', '未': 'earth',
+            '申': 'metal', '酉': 'metal', '戌': 'earth', '亥': 'water'
+        };
+
+        const ELEMENT_KOREAN = {
+            'wood': '목(木)', 'fire': '화(火)', 'earth': '토(土)', 'metal': '금(金)', 'water': '수(水)'
+        };
+
+        // 오행 간 상생상극 판별 (myElem 기준 targetElem)
+        function getElementalRelation(myElem, targetElem) {
+            const ORDER = ['wood', 'fire', 'earth', 'metal', 'water'];
+            const myIdx = ORDER.indexOf(myElem);
+            const targetIdx = ORDER.indexOf(targetElem);
+            const diff = (targetIdx - myIdx + 5) % 5;
+
+            switch (diff) {
+                case 0: return { type: 'same', name: '비겁(比劫)' };     // 비화
+                case 1: return { type: 'birth', name: '식상(食傷)' };    // 아생자
+                case 2: return { type: 'control', name: '재성(財星)' };  // 아극자
+                case 3: return { type: 'be_controlled', name: '관성(官星)' }; // 극아자
+                case 4: return { type: 'be_birthed', name: '인성(印星)' };    // 생아자
+            }
+        }
+
+        // 지지 삼합/충/육합 관계 판별
+        function getBranchRelation(myJi, dayJi) {
+            const clashes = {
+                '子': '午', '丑': '未', '寅': '申', '卯': '酉',
+                '辰': '戌', '巳': '亥', '午': '子', '未': '丑',
+                '申': '寅', '酉': '卯', '戌': '辰', '亥': '巳'
+            };
+            const combines = {
+                '子': '丑', '丑': '子', '寅': '亥', '亥': '寅',
+                '卯': '戌', '戌': '卯', '辰': '酉', '酉': '辰',
+                '巳': '申', '申': '巳', '午': '未', '未': '午'
+            };
+
+            if (clashes[myJi] === dayJi) return '충(沖)';
+            if (combines[myJi] === dayJi) return '육합(六合)';
+            if (myJi === dayJi) return '복음(伏吟)';
+            return '생화(生化)';
+        }
+
+        function formatDateToISO(d) {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function setQuickDate(offsetDays) {
+            const d = new Date();
+            d.setDate(d.getDate() + offsetDays);
+            const targetInput = document.getElementById('targetDate');
+            targetInput.value = formatDateToISO(d);
+
+            const btnToday = document.getElementById('btnQuickToday');
+            const btnTomorrow = document.getElementById('btnQuickTomorrow');
+            if (offsetDays === 0) {
+                btnToday.classList.add('active');
+                btnTomorrow.classList.remove('active');
+            } else if (offsetDays === 1) {
+                btnTomorrow.classList.add('active');
+                btnToday.classList.remove('active');
+            } else {
+                btnToday.classList.remove('active');
+                btnTomorrow.classList.remove('active');
+            }
+        }
+
+        function initDateSelects() {
+            const yearSelect = document.getElementById('birthYear');
+            const monthSelect = document.getElementById('birthMonth');
+            const daySelect = document.getElementById('birthDay');
+
+            for (let y = 2026; y >= 1940; y--) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = `${y}년`;
+                if (y === 1996) opt.selected = true;
+                yearSelect.appendChild(opt);
+            }
+
+            for (let m = 1; m <= 12; m++) {
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.textContent = `${m}월`;
+                if (m === 8) opt.selected = true;
+                monthSelect.appendChild(opt);
+            }
+
+            function updateDays() {
+                const y = parseInt(yearSelect.value);
+                const m = parseInt(monthSelect.value);
+                const lastDay = new Date(y, m, 0).getDate();
+                
+                const currentVal = parseInt(daySelect.value) || 15;
+                daySelect.innerHTML = '';
+                for (let d = 1; d <= lastDay; d++) {
+                    const opt = document.createElement('option');
+                    opt.value = d;
+                    opt.textContent = `${d}일`;
+                    if (d === currentVal && currentVal <= lastDay) opt.selected = true;
+                    daySelect.appendChild(opt);
+                }
+            }
+
+            yearSelect.addEventListener('change', updateDays);
+            monthSelect.addEventListener('change', updateDays);
+            updateDays();
+
+            setQuickDate(0);
+
+            const targetInput = document.getElementById('targetDate');
+            targetInput.addEventListener('change', () => {
+                const todayStr = formatDateToISO(new Date());
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const tomorrowStr = formatDateToISO(tomorrow);
+
+                const btnToday = document.getElementById('btnQuickToday');
+                const btnTomorrow = document.getElementById('btnQuickTomorrow');
+
+                btnToday.classList.toggle('active', targetInput.value === todayStr);
+                btnTomorrow.classList.toggle('active', targetInput.value === tomorrowStr);
+            });
+        }
+
+        // 일진(해당일 간지) 계산
+        function calculateDayPillar(year, month, day) {
+            const baseDate = new Date(1900, 0, 1);
+            const targetDate = new Date(year, month - 1, day);
+            const diffDays = Math.floor((targetDate - baseDate) / (1000 * 60 * 60 * 24));
+            const dayOffset = (diffDays + 10) % 60;
+            const dStemIdx = (dayOffset % 10 + 10) % 10;
+            const dBranchIdx = (dayOffset % 12 + 12) % 12;
+            return {
+                gan: HEAVENLY_STEMS[dStemIdx],
+                ji: EARTHLY_BRANCHES[dBranchIdx],
+                ganElem: STEM_ELEMENTS[HEAVENLY_STEMS[dStemIdx]],
+                jiElem: BRANCH_ELEMENTS[EARTHLY_BRANCHES[dBranchIdx]]
+            };
+        }
+
+        // 사주 원국 계산
+        function calculateSaju(year, month, day, hourIndex) {
+            const yearOffset = (year - 4) % 60;
+            const yStemIdx = (yearOffset % 10 + 10) % 10;
+            const yBranchIdx = (yearOffset % 12 + 12) % 12;
+            const yearGan = HEAVENLY_STEMS[yStemIdx];
+            const yearJi = EARTHLY_BRANCHES[yBranchIdx];
+
+            const mBranchIdx = (month + 1) % 12;
+            const mStemBase = ((yStemIdx % 5) * 2 + 2) % 10;
+            const mStemIdx = (mStemBase + (month - 1)) % 10;
+            const monthGan = HEAVENLY_STEMS[mStemIdx];
+            const monthJi = EARTHLY_BRANCHES[mBranchIdx];
+
+            const birthDayPillar = calculateDayPillar(year, month, day);
+
+            let timeGan = '？';
+            let timeJi = '？';
+            if (hourIndex >= 0) {
+                const tBranchIdx = hourIndex % 12;
+                const dStemIdx = HEAVENLY_STEMS.indexOf(birthDayPillar.gan);
+                const tStemBase = ((dStemIdx % 5) * 2) % 10;
+                const tStemIdx = (tStemBase + tBranchIdx) % 10;
+                timeGan = HEAVENLY_STEMS[tStemIdx];
+                timeJi = EARTHLY_BRANCHES[tBranchIdx];
+            }
+
+            return {
+                year: { gan: yearGan, ji: yearJi },
+                month: { gan: monthGan, ji: monthJi },
+                day: birthDayPillar,
+                time: { gan: timeGan, ji: timeJi }
+            };
+        }
+
+        // 일진과 원국의 관계에 따라 동적으로 학파별 해석 생성
+        function generateSchoolInterpretation(school, saju, targetPillar, targetDayFormatted) {
+            const myGan = saju.day.gan;
+            const myJi = saju.day.ji;
+            const myElem = STEM_ELEMENTS[myGan];
+            const dayGan = targetPillar.gan;
+            const dayJi = targetPillar.ji;
+            const dayElem = targetPillar.ganElem;
+
+            const rel = getElementalRelation(myElem, dayElem);
+            const branchRel = getBranchRelation(myJi, dayJi);
+
+            if (school === 'gyeokguk') {
+                const headlines = {
+                    'be_birthed': `[인성(印星)의 가호] 학문과 문서, 윗사람의 조력이 크게 따르는 날`,
+                    'control': `[재성(財星)의 도래] 현실적인 결과물과 재물 기운이 손안에 쥐어지는 날`,
+                    'be_controlled': `[관성(官星)의 정립] 공적인 규율과 조직에서 귀인의 신임을 얻는 날`,
+                    'birth': `[식상(食傷)의 발양] 재능과 기지가 빛을 발하여 막힌 활로를 뚫어내는 날`,
+                    'same': `[비겁(比劫)의 결속] 동료의 힘을 빌리거나 주도권을 강하게 쥐는 날`
+                };
+
+                const details = {
+                    'be_birthed': `${targetDayFormatted}은 일진의 [${dayGan}${dayJi}] 기운이 일간 [${myGan}]을 생조(生助)하는 인성(印星) 국면입니다. 일지의 [${branchRel}] 작용과 어우러져 고민하던 계약이나 승인, 시험 문제에서 명쾌한 해결책이 도출됩니다. 지나친 수동성을 경계하고 조언을 수용할 때 대길합니다.`,
+                    'control': `${targetDayFormatted}은 일간 [${myGan}]의 역량이 당일 [${dayGan}${dayJi}] 재성(財星)의 실질적 결실로 전환되는 형국입니다. 투자나 협상에서 유리한 고지를 점할 수 있으며 지지 간 [${branchRel}] 흐름을 타고 예상치 못한 부가 이익이나 실속 있는 결정을 거두게 됩니다.`,
+                    'be_controlled': `${targetDayFormatted}은 일진 [${dayGan}${dayJi}]의 엄정한 규율과 명예의 관성(官星)이 작용하는 날입니다. 사대천왕의 수호 아래 공정성을 지키고 원칙대로 일을 처리하면 윗사람의 총애를 얻고 분쟁을 유리하게 종결지을 수 있습니다.`,
+                    'birth': `${targetDayFormatted}은 일간의 내공이 [${dayGan}${dayJi}] 식상(食傷)의 표현력으로 분출되는 시기입니다. 창의적인 아이디어, 면접, 프레젠테이션에서 타인을 압도하는 설득력이 발휘되며, 막혀있던 인간관계의 실타래가 풀립니다.`,
+                    'same': `${targetDayFormatted}은 일진 [${dayGan}${dayJi}]이 나와 어깨를 나란히 하는 비겁(比劫)의 날입니다. 주관과 추진력이 극대화되나 독단을 경계해야 하며, 동료 및 파트너와 성과를 나눌 때 더 큰 운의 확장이 찾아옵니다.`
+                };
+
+                return {
+                    badge: '격국론(格局論) 관법 해설',
+                    headline: headlines[rel.type],
+                    content: details[rel.type]
+                };
+            } else if (school === 'mulsang') {
+                const mulsangImages = {
+                    'wood': '단단히 뿌리내린 청목(靑木)',
+                    'fire': '어둠을 밝히는 등불과 태양',
+                    'earth': '모든 것을 품는 비옥한 대지',
+                    'metal': '서슬 퍼런 보검과 영롱한 보석',
+                    'water': '쉬지 않고 도도히 흐르는 강물'
+                };
+
+                const interactionMsg = {
+                    'be_birthed': `단비가 메마른 대지를 적시듯, ${mulsangImages[targetPillar.ganElem]}의 기운이 ${mulsangImages[myElem]}인 당신의 본원에게 풍성한 생명수와 자양분을 불어넣는 상생의 모습입니다.`,
+                    'control': `${mulsangImages[myElem]}의 힘찬 기운이 마침내 결실인 대지나 열매를 취하여 풍요로운 수확을 거두는 성취의 형국입니다.`,
+                    'be_controlled': `거친 원석을 보검으로 벼려내듯, ${mulsangImages[targetPillar.ganElem]}의 정련 과정을 통해 당신의 가치가 한층 더 눈부시게 빛나는 계기입니다.`,
+                    'birth': `${mulsangImages[myElem]}의 꽃을 활짝 피워 온 세상에 그윽한 향기를 전파하듯, 내면의 역량이 세상 밖으로 찬란히 드러나는 물상입니다.`,
+                    'same': `거대한 숲이나 강물이 모여 하나의 거대한 파도를 이루듯, 같은 기운이 조화롭게 결합하여 든든한 방파제를 구축하는 형상입니다.`
+                };
+
+                return {
+                    badge: '물상론(物象論) 관법 해설',
+                    headline: `[물상 교감] ${mulsangImages[myElem]}과(와) ${mulsangImages[targetPillar.ganElem]}이(가) 조화를 이루는 날`,
+                    content: `${targetDayFormatted}은 자연계의 물상적 흐름 속에서 ${interactionMsg[rel.type]} 지지의 [${myJi}]와 당일의 [${dayJi}]가 [${branchRel}]으로 반응하여 주변 환경이 당신의 뜻에 호응하는 온화한 기운이 감돕니다.`
+                };
+            } else {
+                const maengpaActions = {
+                    'be_birthed': `생용(生用) 주공: 일진 [${dayGan}${dayJi}]의 문호(門戶)가 열려 고급 정보와 자산을 그대로 흡수하는 날`,
+                    'control': `제용(制用) 주공: 세력을 결집하여 유효한 이권과 계약을 단숨에 포획하는 강력한 성과의 날`,
+                    'be_controlled': `화용(化用) 주공: 관살의 압박을 부드럽게 전환하여 명예와 직책의 권한을 확고히 하는 날`,
+                    'birth': `발용(發用) 주공: 내재된 수단과 기술을 적극적으로 가동하여 난관을 돌파하는 날`,
+                    'same': `방신(幇身) 주공: 세력을 견고히 다져 불필요한 폐자(廢字)의 누수를 차단하는 날`
+                };
+
+                return {
+                    badge: '맹파명리(盲派命理) 관법 해설',
+                    headline: maengpaActions[rel.type],
+                    content: `맹파의 에너지 역학 관점에서 ${targetDayFormatted}의 [${dayGan}${dayJi}]은 나의 일주 [${myGan}${myJi}]와 [${branchRel}]의 결합을 이룹니다. 허투(虛透)되거나 낭비되는 에너지가 없고, 핵심 주공(做功)의 효율이 높아 직접적인 문서 날인, 거래 성사, 실질 이권 취득에 더할 나위 없이 유리한 시점입니다.`
+                };
+            }
+        }
+
+        // 일진 기반 사대천왕 세부 운세 및 개운책 생성
+        function generateGuardianReadings(saju, targetPillar) {
+            const myElem = STEM_ELEMENTS[saju.day.gan];
+            const rel = getElementalRelation(myElem, targetPillar.ganElem);
+            const jiRel = getBranchRelation(saju.day.ji, targetPillar.ji);
+
+            const fortuneMap = {
+                'be_birthed': {
+                    wealth: "지국천왕의 온화한 보살핌으로 문서와 자산 기반이 탄탄해집니다. 계획에 없던 지출을 막고 안정된 저축 운이 깃듭니다.",
+                    work: "증장천왕의 지혜가 번뜩여 상사나 기관의 신뢰를 한 몸에 받습니다. 중요한 서류 검토나 결재에 최적의 날입니다.",
+                    love: "광목천왕의 온기가 대인관계에 평안을 줍니다. 나를 묵묵히 지지해 주는 귀인이나 조력자를 만나게 됩니다.",
+                    health: "다문천왕의 정화수가 피로를 씻어내어 컨디션이 빠르게 정상 궤도를 찾습니다. 충분한 수분 섭취가 길합니다.",
+                    color: "청벽색 & 감청색 (水·木 생기)",
+                    dir: "동북방 (東北方)",
+                    num: "1, 6",
+                    word: "음덕양보(陰德陽報)"
+                },
+                'control': {
+                    wealth: "지국천왕의 비파 선율이 재물을 유인합니다. 작은 노력으로도 뚜렷한 금전적 성과나 실속 있는 계약을 체결합니다.",
+                    work: "증장천왕의 결단력으로 실질적인 결과물을 완성해 냅니다. 미뤄두었던 과업을 속전속결로 매듭짓기에 좋습니다.",
+                    love: "광목천왕의 신룡이 내 매력을 부각시킵니다. 적극적인 호감 표현이 통하며 매력적인 만남이 성사되기 쉽습니다.",
+                    health: "체력 소모가 다소 따를 수 있으니 적절한 휴식을 취하십시오. 관절과 근육 스트레칭이 활력을 돕습니다.",
+                    color: "황단색 & 토황색 (土 재물운)",
+                    dir: "서남방 (西南方)",
+                    num: "5, 10",
+                    word: "금옥만당(金玉滿堂)"
+                },
+                'be_controlled': {
+                    wealth: "지국천왕이 든든한 방패가 되어 과소비와 손재수를 물리쳐 줍니다. 충동구매를 삼가면 재정이 견고해집니다.",
+                    work: "증장천왕의 보검이 위엄을 세워줍니다. 원칙과 규정을 준수할 때 직장 내에서 주도권을 공고히 할 수 있습니다.",
+                    love: "광목천왕의 혜안으로 상대방과의 적절한 예의와 거리를 지키는 것이 오히려 깊은 신뢰로 이어지는 날입니다.",
+                    health: "신경성 긴장이나 두통에 유의하십시오. 심호흡과 명상으로 다문천왕의 고요한 평정을 취하십시오.",
+                    color: "백색 & 금분색 (金 강건운)",
+                    dir: "서북방 (西北方)",
+                    num: "4, 9",
+                    word: "극기복례(克己復禮)"
+                },
+                'birth': {
+                    wealth: "지국천왕의 감응으로 재능이 곧 재화가 되는 날입니다. 전문성이나 취미를 살린 부업과 창작 활동에 길합니다.",
+                    work: "증장천왕의 서슬 퍼런 직관으로 복잡한 난제를 일거에 해소합니다. 참신한 기획과 제안이 채택되는 기운입니다.",
+                    love: "광목천왕의 여의주처럼 밝고 긍정적인 기운이 사람들을 끌어당깁니다. 유쾌한 대화로 호감도가 급상승합니다.",
+                    health: "생체 에너지가 넘치는 날입니다. 가벼운 유산소 운동이나 야외 산책으로 양기를 원활히 순환시키십시오.",
+                    color: "주홍색 & 단적색 (火 활력운)",
+                    dir: "정남방 (正南方)",
+                    num: "2, 7",
+                    word: "개화결실(開花結實)"
+                },
+                'same': {
+                    wealth: "지국천왕이 동료 간의 의리를 지켜줍니다. 독점하기보다는 함께 이익을 나눌 때 더 큰 보상이 돌아옵니다.",
+                    work: "증장천왕의 깃발 아래 협력 프로젝트나 팀워크 활동에서 발군의 시너지가 터져 나옵니다.",
+                    love: "광목천왕의 눈길 아래 친구 같은 편안한 관계가 진전됩니다. 자존심 대립을 피하면 관계가 한층 돈독해집니다.",
+                    health: "호흡기와 면역 관리에 신경 쓰십시오. 과음이나 과식을 자제하고 규칙적인 식사를 유지하십시오.",
+                    color: "하엽녹색 & 청벽색 (木 협력운)",
+                    dir: "정동방 (正東方)",
+                    num: "3, 8",
+                    word: "동심협력(同心協力)"
+                }
+            };
+
+            const base = fortuneMap[rel.type];
+            if (jiRel === '충(沖)') {
+                base.work += " (지지의 변동 기운이 있어 이동수나 일정 변경에 침착히 대처하십시오.)";
+            } else if (jiRel === '육합(六合)') {
+                base.love += " (지지의 화합 기운이 강력하여 뜻밖의 호의와 유대가 형성됩니다.)";
+            }
+            return base;
+        }
+
+        function readFortune() {
+            const year = parseInt(document.getElementById('birthYear').value);
+            const month = parseInt(document.getElementById('birthMonth').value);
+            const day = parseInt(document.getElementById('birthDay').value);
+            const hourIdx = parseInt(document.getElementById('birthHour').value);
+            const school = document.querySelector('input[name="sajuSchool"]:checked').value;
+            const targetDateVal = document.getElementById('targetDate').value;
+
+            if (!targetDateVal) {
+                alert("해당일을 선택해 주세요.");
+                return;
+            }
+
+            const loading = document.getElementById('loadingIndicator');
+            const resultView = document.getElementById('resultSection');
+
+            loading.style.display = 'block';
+            resultView.style.display = 'none';
+
+            setTimeout(() => {
+                loading.style.display = 'none';
+
+                // 1. 내 사주 원국 계산
+                const saju = calculateSaju(year, month, day, hourIdx);
+                
+                // 2. 선택한 해당일의 일진 간지 계산
+                const [tYear, tMonth, tDay] = targetDateVal.split('-').map(Number);
+                const targetDayPillar = calculateDayPillar(tYear, tMonth, tDay);
+                const tDateObj = new Date(tYear, tMonth - 1, tDay);
+                const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+                const dayName = dayNames[tDateObj.getDay()];
+                const targetDayFormatted = `${tYear}.${String(tMonth).padStart(2, '0')}.${String(tDay).padStart(2, '0')}(${dayName}) [${targetDayPillar.gan}${targetDayPillar.ji}日]`;
+
+                // 배지 갱신 (해당일 날짜와 일진 간지 동시 표기)
+                document.getElementById('targetDateBadge').textContent = `해당일: ${targetDayFormatted}`;
+
+                function applyChar(id, char, elem) {
+                    const el = document.getElementById(id);
+                    el.textContent = char;
+                    el.className = `character-box elem-${elem}`;
+                }
+
+                applyChar('yearGan', saju.year.gan, STEM_ELEMENTS[saju.year.gan]);
+                applyChar('yearJi', saju.year.ji, BRANCH_ELEMENTS[saju.year.ji]);
+                applyChar('monthGan', saju.month.gan, STEM_ELEMENTS[saju.month.gan]);
+                applyChar('monthJi', saju.month.ji, BRANCH_ELEMENTS[saju.month.ji]);
+                applyChar('dayGan', saju.day.gan, STEM_ELEMENTS[saju.day.gan]);
+                applyChar('dayJi', saju.day.ji, BRANCH_ELEMENTS[saju.day.ji]);
+
+                if (saju.time.gan !== '？') {
+                    applyChar('timeGan', saju.time.gan, STEM_ELEMENTS[saju.time.gan]);
+                    applyChar('timeJi', saju.time.ji, BRANCH_ELEMENTS[saju.time.ji]);
+                } else {
+                    const tGan = document.getElementById('timeGan');
+                    const tJi = document.getElementById('timeJi');
+                    tGan.textContent = '未';
+                    tGan.className = 'character-box';
+                    tJi.textContent = '詳';
+                    tJi.className = 'character-box';
+                }
+
+                // 3. 일진과 내 사주 간의 관계에 따른 동적 해석 생성
+                const interp = generateSchoolInterpretation(school, saju, targetDayPillar, targetDayFormatted);
+                document.getElementById('schoolBadge').textContent = interp.badge;
+                document.getElementById('schoolHeadline').textContent = interp.headline;
+                document.getElementById('schoolContent').textContent = interp.content;
+
+                // 4. 사대천왕 4방위 운세 및 개운책 동적 반영
+                const readings = generateGuardianReadings(saju, targetDayPillar);
+                document.getElementById('wealthFortune').textContent = readings.wealth;
+                document.getElementById('workFortune').textContent = readings.work;
+                document.getElementById('loveFortune').textContent = readings.love;
+                document.getElementById('healthFortune').textContent = readings.health;
+
+                document.getElementById('luckyColor').textContent = readings.color;
+                document.getElementById('luckyDir').textContent = readings.dir;
+                document.getElementById('luckyNum').textContent = readings.num;
+                document.getElementById('mindWord').textContent = readings.word;
+
+                resultView.style.display = 'block';
+                resultView.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 450);
+        }
+
+        window.addEventListener('DOMContentLoaded', initDateSelects);
+    </script>
+</body>
+</html>
